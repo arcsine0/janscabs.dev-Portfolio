@@ -8,38 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getTechIcon } from "@/lib/tech-icons";
 
-const projects = [
-    {
-        id: 1,
-        title: "Project 1",
-        description: "A brief description of Project 1",
-        technologies: ["React", "TypeScript", "Node.js"],
-        images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"],
-        longDescription: "This is a longer description of Project 1, including its features, challenges, and outcomes.",
-        specs: ["React", "Next.js", "TypeScript", "Node.js"],
-        requirements: ["Node.js 14+", "npm 6+"]
-    },
-    {
-        id: 2,
-        title: "Project 2",
-        description: "A brief description of Project 2",
-        technologies: ["React Native", "Redux", "Firebase"],
-        images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"],
-        longDescription: "This is a longer description of Project 2, including its features, challenges, and outcomes.",
-        specs: ["React Native", "Redux", "Firebase", "Expo"],
-        requirements: ["Node.js 14+", "npm 6+", "Expo CLI"]
-    },
-    {
-        id: 3,
-        title: "Project 3",
-        description: "A brief description of Project 3",
-        technologies: ["Vue.js", "Vuex", "Express"],
-        images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"],
-        longDescription: "This is a longer description of Project 3, including its features, challenges, and outcomes.",
-        specs: ["Vue.js", "Vuex", "Express", "MongoDB"],
-        requirements: ["Node.js 14+", "npm 6+", "MongoDB"]
-    },
-];
+import { projects } from "@/lib/projects-list";
 
 export default function ProjectDetails() {
     const { id } = useParams<{ id: string }>();
@@ -90,7 +59,7 @@ export default function ProjectDetails() {
                         <AnimatePresence mode="wait">
                             <motion.img
                                 key={currentImageIndex}
-                                src={project.images[currentImageIndex]}
+                                src={`/screenshots/${project.images[currentImageIndex]}`}
                                 alt={`${project.title} screenshot ${currentImageIndex + 1}`}
                                 className="w-full h-64 object-cover rounded-lg"
                                 initial={{ opacity: 0 }}
@@ -118,10 +87,10 @@ export default function ProjectDetails() {
                             <CardContent className="p-4">
                                 <h3 className="text-lg font-semibold mb-2">Tech Stack</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {project.specs.map((spec, index) => (
+                                    {project.technologies.map((tech, index) => (
                                         <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                                            {getTechIcon(spec)}
-                                            {spec}
+                                            {getTechIcon(tech)}
+                                            {tech}
                                         </Badge>
                                     ))}
                                 </div>
@@ -139,9 +108,14 @@ export default function ProjectDetails() {
                         </Card>
                     </div>
                 </div>
-                <div className="mt-8">
-                    <h2 className="text-2xl font-semibold mb-4">Project Details</h2>
-                    <p className="text-zinc-600 dark:text-zinc-400">{project.longDescription}</p>
+                <div className="mt-8 flex flex-col gap-4">
+                    {project.longDescription.map((section, index) => (
+                        <div key={index}>
+                            <h2 className="text-2xl font-semibold mb-4">{section.title}</h2>
+                            <p className="text-zinc-600 dark:text-zinc-400">{section.text}</p>
+                        </div>
+                    ))}
+
                 </div>
             </motion.div>
         </motion.div>

@@ -1,42 +1,12 @@
 import { useState } from "react"
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
 import { getTechIcon } from "@/lib/tech-icons"
 
-const projects = [
-    {
-        id: 1,
-        title: "Project 1",
-        description: "A brief description of Project 1",
-        technologies: ["React", "TypeScript", "Node.js"],
-        images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"],
-        longDescription: "This is a longer description of Project 1, including its features, challenges, and outcomes.",
-        specs: ["React", "Next.js", "TypeScript", "Node.js"],
-        requirements: ["Node.js 14+", "npm 6+"]
-    },
-    {
-        id: 2,
-        title: "Project 2",
-        description: "A brief description of Project 2",
-        technologies: ["React Native", "Redux", "Firebase"],
-        images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"],
-        longDescription: "This is a longer description of Project 2, including its features, challenges, and outcomes.",
-        specs: ["React Native", "Redux", "Firebase", "Expo"],
-        requirements: ["Node.js 14+", "npm 6+", "Expo CLI"]
-    },
-    {
-        id: 3,
-        title: "Project 3",
-        description: "A brief description of Project 3",
-        technologies: ["Vue.js", "Vuex", "Express"],
-        images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"],
-        longDescription: "This is a longer description of Project 3, including its features, challenges, and outcomes.",
-        specs: ["Vue.js", "Vuex", "Express", "MongoDB"],
-        requirements: ["Node.js 14+", "npm 6+", "MongoDB"]
-    },
-]
+import { projects } from "@/lib/projects-list"
 
 export default function Projects() {
     const [hoveredProject, setHoveredProject] = useState<string | number | undefined>(undefined)
@@ -65,6 +35,16 @@ export default function Projects() {
                                 onMouseEnter={() => setHoveredProject(project.id)}
                                 onMouseLeave={() => setHoveredProject(undefined)}
                             >
+                                <div className="relative">
+                                    <img
+                                        src={`/thumbnails/${project.thumbnail}`}
+                                        alt={`${project.title} thumbnail`}
+                                        className="w-full h-48 object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 transition-opacity duration-300 hover:opacity-100">
+                                        <span className="text-white text-lg font-semibold">View Details</span>
+                                    </div>
+                                </div>
                                 <CardContent className="p-4">
                                     <h3 className="text-lg font-semibold mb-2">{project.title}</h3>
                                     <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{project.description}</p>

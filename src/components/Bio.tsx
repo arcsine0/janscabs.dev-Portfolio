@@ -9,7 +9,7 @@ export default function Bio() {
             <CardContent className="p-6 space-y-4">
                 <div className="flex justify-center">
                     <Avatar className="w-32 h-32">
-                        <AvatarImage src="/avatar.jpg" alt="Your Name" />
+                        <AvatarImage src="/avatar.jpg" alt="Jans Caballegan" />
                         <AvatarFallback>JC</AvatarFallback>
                     </Avatar>
                 </div>
@@ -20,10 +20,18 @@ export default function Bio() {
                     Always exploring new technologies and pushing the boundaries of what"s possible in web and mobile development.
                 </p>
                 <div className="flex justify-center space-x-4">
-                    <Button variant="ghost" size="icon">
+                    <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => window.open("https://github.com/arcsine0", "_blank")?.focus()}
+                    >
                         <Github className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon">
+                    <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => window.open("https://www.linkedin.com/in/jans-caballegan/", "_blank")?.focus()}
+                    >
                         <Linkedin className="h-5 w-5" />
                     </Button>
                 </div>
