@@ -1,5 +1,5 @@
 import { FaReact, FaNodeJs, FaVuejs, FaAngular, FaPython, FaPhp } from "react-icons/fa"
-import { SiTypescript, SiRedux, SiFirebase, SiExpo, SiMongodb, SiExpress, SiNextdotjs, SiVuedotjs, SiRubyonrails, SiDjango } from "react-icons/si"
+import { SiTypescript, SiRedux, SiFirebase, SiExpo, SiMongodb, SiExpress, SiNextdotjs, SiRubyonrails, SiDjango } from "react-icons/si"
 
 export function getTechIcon(tech: string) {
   switch (tech.toLowerCase()) {
