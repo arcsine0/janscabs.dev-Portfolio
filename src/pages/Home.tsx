@@ -83,7 +83,7 @@ export default function Home() {
                         <TabsList className="grid w-full grid-cols-3 h-14">
                             <TabsTrigger value="projects" className="text-lg">Projects</TabsTrigger>
                             <TabsTrigger value="stack" className="text-lg">Stack</TabsTrigger>
-                            <TabsTrigger value="contributions" className="text-lg">Contributions</TabsTrigger>
+                            <TabsTrigger value="contributions" className="text-lg">Activity</TabsTrigger>
                         </TabsList>
                         <TabsContent value="projects"><Projects /></TabsContent>
                         <TabsContent value="stack"><TechStack /></TabsContent>

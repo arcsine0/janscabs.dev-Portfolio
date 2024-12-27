@@ -5,15 +5,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { YouTubeVideo } from "@/components/YoutubeVideo";
+
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getTechIcon } from "@/lib/tech-icons";
 
-import { projects } from "@/lib/projects-list";
+import { projects, Media } from "@/lib/projects-list";
 
 export default function ProjectDetails() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
     const [showContent, setShowContent] = useState(false);
 
     useEffect(() => {
@@ -26,12 +28,26 @@ export default function ProjectDetails() {
         return <div>Project not found</div>;
     }
 
-    const nextImage = () => {
-        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % project.images.length);
+    const nextMedia = () => {
+        setCurrentMediaIndex((prevIndex) => (prevIndex + 1) % project.media.length);
     };
 
-    const prevImage = () => {
-        setCurrentImageIndex((prevIndex) => (prevIndex - 1 + project.images.length) % project.images.length);
+    const prevMedia = () => {
+        setCurrentMediaIndex((prevIndex) => (prevIndex - 1 + project.media.length) % project.media.length);
+    };
+
+    const renderMedia = (media: Media) => {
+        if (media.type === 'video') {
+            return <YouTubeVideo videoId={media.src} />;
+        } else {
+            return (
+                <img
+                    src={`/screenshots/${media.src}`}
+                    alt={`${project.title} screenshot`}
+                    className="w-full h-auto object-cover rounded-lg"
+                />
+            );
+        }
     };
 
     return (
@@ -57,29 +73,34 @@ export default function ProjectDetails() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="relative">
                         <AnimatePresence mode="wait">
-                            <motion.img
-                                key={currentImageIndex}
-                                src={`/screenshots/${project.images[currentImageIndex]}`}
-                                alt={`${project.title} screenshot ${currentImageIndex + 1}`}
-                                className="w-full h-64 object-cover rounded-lg"
+                            <motion.div
+                                key={currentMediaIndex}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 transition={{ duration: 0.5 }}
-                            />
+                            >
+                                {renderMedia(project.media[currentMediaIndex])}
+                            </motion.div>
                         </AnimatePresence>
-                        <button
-                            onClick={prevImage}
-                            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-zinc-800 bg-opacity-50 rounded-full p-2"
-                        >
-                            <ChevronLeft className="w-6 h-6 text-zinc-100" />
-                        </button>
-                        <button
-                            onClick={nextImage}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-zinc-800 bg-opacity-50 rounded-full p-2"
-                        >
-                            <ChevronRight className="w-6 h-6 text-zinc-100" />
-                        </button>
+                        {project.media.length > 1 && (
+                            <>
+                                <button
+                                    onClick={prevMedia}
+                                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-zinc-800 bg-opacity-50 rounded-full p-2"
+                                    aria-label="Previous media"
+                                >
+                                    <ChevronLeft className="w-6 h-6 text-zinc-100" />
+                                </button>
+                                <button
+                                    onClick={nextMedia}
+                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-zinc-800 bg-opacity-50 rounded-full p-2"
+                                    aria-label="Next media"
+                                >
+                                    <ChevronRight className="w-6 h-6 text-zinc-100" />
+                                </button>
+                            </>
+                        )}
                     </div>
                     <div className="space-y-4">
                         <p className="text-zinc-600 dark:text-zinc-400">{project.description}</p>
@@ -112,7 +133,15 @@ export default function ProjectDetails() {
                     {project.longDescription.map((section, index) => (
                         <div key={index}>
                             <h2 className="text-2xl font-semibold mb-4">{section.title}</h2>
-                            <p className="text-zinc-600 dark:text-zinc-400">{section.text}</p>
+                            {section.type === "simple" ? (
+                                <p className="text-zinc-600 dark:text-zinc-400">{section.text}</p>
+                            ) : (
+                                <ul>
+                                    {Array.isArray(section.text) && section.text.map((item, itemIndex) => (
+                                        <li key={itemIndex} className="text-zinc-600 dark:text-zinc-400">{item}</li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
                     ))}
 
