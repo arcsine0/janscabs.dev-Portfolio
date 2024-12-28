@@ -60,7 +60,7 @@ export const projects: Project[] = [
             },
             {
                 type: "simple",
-                title: "Purpose / Story",
+                title: "Background",
                 text: [
                     "This project was actually my thesis / capstone project for college. When I was looking for topics to cover, I really wanted to solve a problem. Not just any problem, I wanted to make an actual difference to the industry I am making the application for.",
                     "I was fairly active within the community of buying and selling of accounts or items from video games into real-life cash. These communities are very active in social media platforms like Facebook and Discord, where users advertised their needs to potential customers. With a community like this, transactions and interactions are Peer-to-Peer (P2P) by nature, meaning there aren't a lot of official means of insurance for users to rely on other than trust and reputation. As a result of this, scams are very prevalent and therefore it is on the user's risk and responsibility to make sure that a transaction is safe enough to do so.",
@@ -127,7 +127,7 @@ export const projects: Project[] = [
             },
             {
                 type: "simple",
-                title: "Purpose / Story",
+                title: "Background",
                 text: [
                     "This project was born from a task for our finals of a course in Machine Learning back in college. At that time, I was already exploring machine learning by myself as a hobby and so I was more well-versed in what the latest models are capable of as well as they're limitations and size. I commonly found myself hanging around HuggingFace, testing models and seeing what cool and fun projects I could do with them. So when the time came to pick for topics to go for, I knew that I could take simple and common application of machine learning to the next level and not just at face value.",
                     "The topic I landed on was on sentiment analysis. In the past, I was already thinking of utlizing sentiment analysis to train my personal cryptocurrency price direction model, so I had a decent idea on what I could do with it. As I was exploring through HuggingFace, I came across Zero-shot classification models. These models are capable of classifying strings of texts into either new classes, or pre-defined sets of classes. These models made me think of the automatic tagging bots in Github issues that I come across a lot of times when debugging. This inspired me to combine sentiment analysis with zero-shot classification in organizing support tickets. This was how Smart Ticket came to be."
@@ -168,7 +168,7 @@ export const projects: Project[] = [
             },
             {
                 type: "simple",
-                title: "Purpose / Story",
+                title: "Background",
                 text: [
                     "This project was my first official project to utilize websockets for its main functionality. I was practicing how to use websockets at the time, and when the course I had back then tasked us with a final project / system, I thought to myself 'might as well use it to practice sockets'. Part of the reason why this project is not hosted is because back then, there weren't readily available and easy to use Backend-as-a-Services (BaaS) like what is Firebase right now. I'd have to find services that allow websocket hosting, which admittedly costed a lot more than what I could spend for a small project.",
                     "Most popular applications of websockets, especially at the time, where web-hosted video games like Skribbl.io, so that inspired me to utilize the technology in a game-like format. Of course, the biggest inspiration of KaQuizz would be KaHoot. This served as a good practice application to start my journey with learning the development for real-time applications."
@@ -225,7 +225,7 @@ export const projects: Project[] = [
             },
             {
                 type: "simple",
-                title: "Purpose / Story",
+                title: "Background",
                 text: [
                     "This project was my very first React Native project in my entire React learning journey. It was also my first experience with Expo and Expo go, which helped me a lot when I was learning since Expo go made it a lot easier to test the application I'm developing just by scanning the QR Code provided by Expo. All projects that I develop, I try to be unique and non-generic, even the projects for testing out new knowledge like this one. That's why I didn't opt for a simple to-do list and went towards a simple pinterest clone instead.",
                     "I say simple, as this application is just a basic implementation of CRUD. I used Unsplash and their public API to collect the image links to display through the application. And then for 'saving' the images, I simply saved the image links instead. This project was simple, yet wonderfully introduced me to mobile app development through Expo React Native."
@@ -286,7 +286,7 @@ export const projects: Project[] = [
             },
             {
                 type: "simple",
-                title: "Purpose / Story",
+                title: "Background",
                 text: [
                     "This project was actually one of the projects I started developing out from personal needs. The second hobby of mine is, weirdly enough, finance and all about finding alternative ways to accumulate wealth. And so, I have this one consistently on-going project of researching and developing a model that predicts cryptocurrency price direction. For my models, I needed the data to feed and train with as a start. Back then, I was able to procure datasets of historiccal transactions through the Binance website, but ever since Binance got blocked in the Philippines, I'm not able to utilize it recently. The only other way I could collect full and up-to-date transactional data is through another platfrom called Bybit that was very similar to Binance. The problem is that in order to get the dataset from Bybit, it must be done through their public API.",
                     "Instead of creating a one-time use quick program to gather the data, I decided that it's more worth it in the long run to just create an application I can reuse as many times as I needed. With that, this project was born.",
