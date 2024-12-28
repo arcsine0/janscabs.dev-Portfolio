@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { YouTubeVideo } from "@/components/YoutubeVideo";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleSlash2, Github, Globe } from "lucide-react";
 import { getTechIcon } from "@/lib/tech-icons";
 
 import { projects, Media } from "@/lib/projects-list";
@@ -71,37 +71,48 @@ export default function ProjectDetails() {
             >
                 <h1 className="text-3xl font-bold mb-4">{project.title}</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="relative">
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={currentMediaIndex}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.5 }}
-                            >
-                                {renderMedia(project.media[currentMediaIndex])}
-                            </motion.div>
-                        </AnimatePresence>
-                        {project.media.length > 1 && (
-                            <>
-                                <button
-                                    onClick={prevMedia}
-                                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-zinc-800 bg-opacity-50 rounded-full p-2"
-                                    aria-label="Previous media"
+                    {project.media.length > 0 ?
+                        <div className="relative">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={currentMediaIndex}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.5 }}
                                 >
-                                    <ChevronLeft className="w-6 h-6 text-zinc-100" />
-                                </button>
-                                <button
-                                    onClick={nextMedia}
-                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-zinc-800 bg-opacity-50 rounded-full p-2"
-                                    aria-label="Next media"
-                                >
-                                    <ChevronRight className="w-6 h-6 text-zinc-100" />
-                                </button>
-                            </>
-                        )}
-                    </div>
+                                    {renderMedia(project.media[currentMediaIndex])}
+                                </motion.div>
+                            </AnimatePresence>
+                            {project.media.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={prevMedia}
+                                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-zinc-800 bg-opacity-50 rounded-full p-2"
+                                        aria-label="Previous media"
+                                    >
+                                        <ChevronLeft className="w-6 h-6 text-zinc-100" />
+                                    </button>
+                                    <button
+                                        onClick={nextMedia}
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-zinc-800 bg-opacity-50 rounded-full p-2"
+                                        aria-label="Next media"
+                                    >
+                                        <ChevronRight className="w-6 h-6 text-zinc-100" />
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                        :
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-200">
+                            <CircleSlash2
+                                color="black"
+                                size={32}
+                            />
+                            <h2>There are no current screenshots for this project yet</h2>
+                        </div>
+                    }
+
                     <div className="space-y-4">
                         <p className="text-zinc-600 dark:text-zinc-400">{project.description}</p>
                         <Card className="bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
@@ -127,6 +138,43 @@ export default function ProjectDetails() {
                                 </ul>
                             </CardContent>
                         </Card>
+                        <Card className="bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                            <CardContent className="p-4">
+                                <h3 className="text-lg font-semibold mb-2">Project Links</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {project.projectLinks.map((link, index) => {
+                                        switch (link.type) {
+                                            case "code":
+                                                return (
+                                                    <Button
+                                                        key={index}
+                                                        className="flex items-center gap-2"
+                                                        onClick={() => window.open(link.url, '_blank')}
+                                                    >
+                                                        <Github className="w-4 h-4" />
+                                                        Source Code
+                                                    </Button>
+                                                )
+
+                                                break;
+                                            case "store":
+                                                break;
+                                            default:
+                                            case "demo":
+                                                <Button
+                                                    key={index}
+                                                    className="flex items-center gap-2"
+                                                    onClick={() => window.open(link.url, '_blank')}
+                                                >
+                                                    <Globe className="w-4 h-4" />
+                                                    Live Demo
+                                                </Button>
+                                                break;
+                                        }
+                                    })}
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
                 <div className="mt-8 flex flex-col gap-4">
@@ -134,11 +182,16 @@ export default function ProjectDetails() {
                         <div key={index}>
                             <h2 className="text-2xl font-semibold mb-4">{section.title}</h2>
                             {section.type === "simple" ? (
-                                <p className="text-zinc-600 dark:text-zinc-400">{section.text}</p>
+                                <div className="flex flex-col gap-2">
+                                    {section.text.map((item, index) => (
+                                        <p key={index} className="text-zinc-600 dark:text-zinc-400">{item}</p>
+                                    ))}
+                                </div>
+
                             ) : (
                                 <ul>
-                                    {Array.isArray(section.text) && section.text.map((item, itemIndex) => (
-                                        <li key={itemIndex} className="text-zinc-600 dark:text-zinc-400">{item}</li>
+                                    {section.text.map((item, index) => (
+                                        <li key={index} className="text-zinc-600 dark:text-zinc-400">- {item}</li>
                                     ))}
                                 </ul>
                             )}
