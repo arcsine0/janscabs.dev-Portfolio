@@ -44,7 +44,7 @@ export default function ProjectDetails() {
                 <img
                     src={`/screenshots/${media.src}`}
                     alt={`${project.title} screenshot`}
-                    className="w-full h-auto object-cover rounded-lg"
+                    className="w-auto h-full max-h-[500px] object-cover rounded-lg"
                 />
             );
         }
@@ -80,6 +80,7 @@ export default function ProjectDetails() {
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     transition={{ duration: 0.5 }}
+                                    className="flex items-center justify-center"
                                 >
                                     {renderMedia(project.media[currentMediaIndex])}
                                 </motion.div>

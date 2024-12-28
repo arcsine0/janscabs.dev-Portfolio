@@ -185,10 +185,67 @@ export const projects: Project[] = [
     },
     {
         id: 4,
+        title: "Not Pinterest",
+        description: "A pinterest clone using Unsplash API",
+        technologies: ["React Native", "Expo", "TypeScript", "Node.js", "Firebase", "NativeWind"],
+        thumbnail: "",
+        media: [
+            {
+                type: "image",
+                src: "notpinterest1.jpg"
+            },
+            {
+                type: "image",
+                src: "notpinterest2.jpg"
+            },
+            {
+                type: "image",
+                src: "notpinterest3.jpg"
+            },
+            {
+                type: "image",
+                src: "notpinterest4.jpg"
+            },
+        ],
+        longDescription: [
+            {
+                type: "simple",
+                title: "Project Description",
+                text: [
+                    "This mobile application utilizes Expo React Native in conjunction with the Unsplash API to provide images that the user can save in collections to their profile.",
+                ],
+            },
+            {
+                type: "list",
+                title: "Features",
+                text: [
+                    "Images straight from Unsplash",
+                    "Saveable image and image collections"
+                ],
+            },
+            {
+                type: "simple",
+                title: "Purpose / Story",
+                text: [
+                    "This project was my very first React Native project in my entire React learning journey. It was also my first experience with Expo and Expo go, which helped me a lot when I was learning since Expo go made it a lot easier to test the application I'm developing just by scanning the QR Code provided by Expo. All projects that I develop, I try to be unique and non-generic, even the projects for testing out new knowledge like this one. That's why I didn't opt for a simple to-do list and went towards a simple pinterest clone instead.",
+                    "I say simple, as this application is just a basic implementation of CRUD. I used Unsplash and their public API to collect the image links to display through the application. And then for 'saving' the images, I simply saved the image links instead. This project was simple, yet wonderfully introduced me to mobile app development through Expo React Native."
+                ],
+            },
+        ],
+        requirements: ["Node.js 14+", "npm 6+"],
+        projectLinks: [
+            {
+                type: "code",
+                url: "https://github.com/arcsine0/not-pinterest",
+            }
+        ],
+    },
+    {
+        id: 5,
         title: "Cryptocurrency K-Line Downloader",
         description: "A cryptocurrency historical data downloader",
         technologies: ["React", "TypeScript", "Electron", "Vite", "TailwindCSS", "ShadCN"],
-        thumbnail: "cryptodw1.png",
+        thumbnail: "",
         media: [
             {
                 type: "image",
