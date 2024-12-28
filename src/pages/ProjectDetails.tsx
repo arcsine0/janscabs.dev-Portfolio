@@ -18,6 +18,8 @@ export default function ProjectDetails() {
     const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
     const [showContent, setShowContent] = useState(false);
 
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     useEffect(() => {
         setShowContent(true);
     }, []);
@@ -105,7 +107,7 @@ export default function ProjectDetails() {
                             )}
                         </div>
                         :
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-200">
+                        <div className="w-full h-full p-4 flex flex-col items-center justify-center gap-2 bg-slate-200">
                             <CircleSlash2
                                 color="black"
                                 size={32}

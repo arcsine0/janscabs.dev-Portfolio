@@ -45,7 +45,6 @@ export default function Projects() {
                                     :
                                         <div className="w-full h-48 bg-gradient-to-r from-cyan-500 to-blue-500"></div>
                                     }
-
                                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 transition-opacity duration-300 hover:opacity-100">
                                         <span className="text-white text-lg font-semibold">View Details</span>
                                     </div>
