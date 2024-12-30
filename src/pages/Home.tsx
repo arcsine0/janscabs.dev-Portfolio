@@ -15,13 +15,11 @@ import { Download } from "lucide-react";
 const handleDownloadResume = () => {
     const link = document.createElement("a");
 
-    link.href = "../assets/raphaeljanscaballegan.pdf";
-    link.download = "raphaeljanscaballegan.pdf";
+    link.href = "/misc/raphaeljanscaballegan_resume.pdf";
     link.target = "_blank";
 
     document.body.appendChild(link);
     link.click();
-
     document.body.removeChild(link);
 }
 
