@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { ArrowLeft, ArrowUpRight, Github, Mail, Terminal } from "lucide-react";
+import { lazy, Suspense, useState } from "react";
+import { ArrowUpRight, Github, Mail, Terminal } from "lucide-react";
 import { Grid } from "./components/canvasui/Grid";
+import TerminalLoader from "./components/TerminalLoader";
 import VHS from "./components/canvasui/VHS";
 
 const projects = [
@@ -10,13 +11,22 @@ const projects = [
 ];
 type Page = "home" | "archive";
 
+let archiveCached = false;
+const Archive = lazy(async () => {
+	const module = await import("./pages/Archive");
+	archiveCached = true;
+	return module;
+});
+
 function App() {
 	const [page, setPage] = useState<Page>("home");
 	const [flash, setFlash] = useState(0);
 	const navigate = (next: Page) => {
 		if (next !== page) {
 			setPage(next);
-			setFlash((value) => value + 1);
+			if (next === "home" || archiveCached) {
+				setFlash((value) => value + 1);
+			}
 		}
 	};
 
@@ -63,193 +73,173 @@ function App() {
 						vignette={0.75}
 						saturation={0.45}
 					>
-						<div className="terminal-app">
-							<div className="mx-auto min-h-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
-								<header className="navbar terminal-panel px-3 sm:px-6">
-									<div className="navbar-start w-auto flex-none gap-2 sm:gap-3">
-										<Terminal
-											aria-hidden="true"
-											className="size-5 text-primary"
-										/>
-										<button
-											className="text-sm font-bold tracking-[0.16em] sm:text-base"
-											onClick={() => navigate("home")}
+						<Suspense fallback={<TerminalLoader />}>
+							<div className="terminal-app">
+								<div className="mx-auto min-h-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
+									<header className="navbar terminal-panel px-3 sm:px-6">
+										<div className="navbar-start w-auto flex-none gap-2 sm:gap-3">
+											<Terminal
+												aria-hidden="true"
+												className="size-5 text-primary"
+											/>
+											<button
+												className="text-sm font-bold tracking-[0.16em] sm:text-base"
+												onClick={() => navigate("home")}
+											>
+												JANS//DEV
+											</button>
+										</div>
+										<nav
+											className="navbar-end ml-auto w-auto flex-none gap-2 text-[0.62rem] tracking-[0.08em] sm:gap-6 sm:text-sm sm:tracking-[0.14em]"
+											aria-label="Primary navigation"
 										>
-											JANS//DEV
-										</button>
-									</div>
-									<nav
-										className="navbar-end ml-auto w-auto flex-none gap-2 text-[0.62rem] tracking-[0.08em] sm:gap-6 sm:text-sm sm:tracking-[0.14em]"
-										aria-label="Primary navigation"
-									>
-										<button
-											className="link link-hover"
-											onClick={() => navigate("home")}
-										>
-											[HOME]
-										</button>
-										<button
-											className="link link-hover"
-											onClick={() => navigate("archive")}
-										>
-											[ARCHIVE]
-										</button>
-										<a
-											className="link link-hover"
-											href="mailto:hello@janscabs.dev"
-										>
-											[CONTACT]
-										</a>
-									</nav>
-								</header>
-								{page === "home" ? (
-									<main id="top">
-										<section className="hero min-h-[58vh] py-12 sm:py-20">
-											<div className="hero-content w-full max-w-none items-end justify-between gap-10 p-0 max-lg:flex-col max-lg:items-start lg:flex-row">
-												<div className="max-w-3xl">
-													<p className="terminal-label mb-5">
-														SYS.ACCESS // FULL-STACK TYPESCRIPT DEVELOPER
-													</p>
-													<h1 className="text-5xl font-normal leading-[0.92] tracking-[-0.05em] text-base-content sm:text-7xl lg:text-8xl">
-														Building useful things for the internet.
-													</h1>
-													<p className="mt-7 max-w-xl text-base leading-7 text-base-content/75">
-														I design and ship clear, resilient web experiences
-														where thoughtful interface work meets reliable
-														engineering.
-													</p>
-												</div>
-												<aside className="card card-border terminal-panel w-full max-w-sm">
-													<div className="card-body gap-4 p-5">
-														<p className="terminal-label">// OPERATOR STATUS</p>
-														<p className="text-lg">ONLINE / AVAILABLE</p>
-														<div className="terminal-rule" />
-														<p className="text-sm text-base-content/75">
-															Based in the Philippines.
-															<br />
-															Working worldwide.
+											<button
+												className="link link-hover"
+												onClick={() => navigate("home")}
+											>
+												[HOME]
+											</button>
+											<button
+												className="link link-hover"
+												onClick={() => navigate("archive")}
+											>
+												[ARCHIVE]
+											</button>
+											<a
+												className="link link-hover"
+												href="mailto:hello@janscabs.dev"
+											>
+												[CONTACT]
+											</a>
+										</nav>
+									</header>
+									{page === "home" ? (
+										<main id="top">
+											<section className="hero min-h-[58vh] py-12 sm:py-20">
+												<div className="hero-content w-full max-w-none items-end justify-between gap-10 p-0 max-lg:flex-col max-lg:items-start lg:flex-row">
+													<div className="max-w-3xl">
+														<p className="terminal-label mb-5">
+															SYS.ACCESS // FULL-STACK TYPESCRIPT DEVELOPER
 														</p>
-														<div className="card-actions mt-2">
-															<a
-																className="btn btn-primary btn-sm"
-																href="mailto:hello@janscabs.dev"
-															>
-																Open channel <ArrowUpRight className="size-4" />
-															</a>
-														</div>
+														<h1 className="text-5xl font-normal leading-[0.92] tracking-[-0.05em] text-base-content sm:text-7xl lg:text-8xl">
+															Building useful things for the internet.
+														</h1>
+														<p className="mt-7 max-w-xl text-base leading-7 text-base-content/75">
+															I design and ship clear, resilient web experiences
+															where thoughtful interface work meets reliable
+															engineering.
+														</p>
 													</div>
-												</aside>
-											</div>
-										</section>
-										<section
-											id="work"
-											className="terminal-section py-14 sm:py-20"
-										>
-											<div className="mb-8 flex items-baseline justify-between">
-												<h2 className="text-2xl font-normal sm:text-3xl">
-													SELECTED WORK
-												</h2>
-												<span className="terminal-label">03 RECORDS</span>
-											</div>
-											<div className="grid gap-4 md:grid-cols-3">
-												{projects.map(([number, name, description]) => (
-													<article
-														className="card card-border terminal-panel"
-														key={number}
-													>
-														<div className="card-body p-6">
-															<p className="terminal-label">REC.{number}</p>
-															<h3 className="card-title mt-8 text-xl font-normal">
-																{name}
-															</h3>
-															<p className="text-sm text-base-content/75">
-																{description}
+													<aside className="card card-border terminal-panel w-full max-w-sm">
+														<div className="card-body gap-4 p-5">
+															<p className="terminal-label">
+																// OPERATOR STATUS
 															</p>
-															<div className="card-actions mt-4">
+															<p className="text-lg">ONLINE / AVAILABLE</p>
+															<div className="terminal-rule" />
+															<p className="text-sm text-base-content/75">
+																Based in the Philippines.
+																<br />
+																Working worldwide.
+															</p>
+															<div className="card-actions mt-2">
 																<a
-																	className="btn btn-ghost btn-sm px-0"
-																	href="#contact"
+																	className="btn btn-primary btn-sm"
+																	href="mailto:hello@janscabs.dev"
 																>
-																	View record{" "}
+																	Open channel{" "}
 																	<ArrowUpRight className="size-4" />
 																</a>
 															</div>
 														</div>
-													</article>
-												))}
-											</div>
-										</section>
-										<section
-											id="about"
-											className="terminal-section grid gap-8 py-14 sm:grid-cols-2 sm:py-20"
-										>
-											<h2 className="text-2xl font-normal sm:text-3xl">
-												HUMAN INTERFACE,
-												<br />
-												MACHINE PRECISION.
-											</h2>
-											<p className="max-w-xl text-base leading-7 text-base-content/75">
-												I am Raphael "Jans" Caballegan, a full-stack developer
-												focused on elegant products, maintainable systems, and
-												the space where the two meet.
-											</p>
-										</section>
-									</main>
-								) : (
-									<main className="flex min-h-[70vh] items-center justify-center py-12">
-										<section className="card card-border terminal-panel w-full max-w-2xl">
-											<div className="card-body gap-6 p-8 sm:p-12">
-												<p className="terminal-label">
-													ARCHIVE.NODE // PLACEHOLDER
-												</p>
-												<h1 className="card-title text-3xl font-normal sm:text-5xl">
-													TRANSMISSION LOG
-												</h1>
-												<div className="terminal-rule" />
-												<p className="max-w-lg leading-7 text-base-content/75">
-													This placeholder screen exists to test the terminal
-													flash transition. Future case studies, experiments,
-													and field notes will live here.
-												</p>
-												<div className="card-actions">
-													<button
-														className="btn btn-ghost btn-sm"
-														onClick={() => navigate("home")}
-													>
-														<ArrowLeft className="size-4" /> Return to home
-													</button>
+													</aside>
 												</div>
-											</div>
-										</section>
-									</main>
-								)}
-								<footer
-									id="contact"
-									className="terminal-section flex flex-col gap-5 pt-6 text-sm sm:flex-row sm:items-center sm:justify-between"
-								>
-									<p className="terminal-label">
-										COPYRIGHT {new Date().getFullYear()} // JANS CABALLEGAN
-									</p>
-									<div className="flex gap-4">
-										<a
-											className="btn btn-ghost btn-sm"
-											href="https://github.com/arcsine0"
-											target="_blank"
-											rel="noreferrer"
-										>
-											<Github className="size-4" /> GitHub
-										</a>
-										<a
-											className="btn btn-ghost btn-sm"
-											href="mailto:hello@janscabs.dev"
-										>
-											<Mail className="size-4" /> Email
-										</a>
-									</div>
-								</footer>
+											</section>
+											<section
+												id="work"
+												className="terminal-section py-14 sm:py-20"
+											>
+												<div className="mb-8 flex items-baseline justify-between">
+													<h2 className="text-2xl font-normal sm:text-3xl">
+														SELECTED WORK
+													</h2>
+													<span className="terminal-label">03 RECORDS</span>
+												</div>
+												<div className="grid gap-4 md:grid-cols-3">
+													{projects.map(([number, name, description]) => (
+														<article
+															className="card card-border terminal-panel"
+															key={number}
+														>
+															<div className="card-body p-6">
+																<p className="terminal-label">REC.{number}</p>
+																<h3 className="card-title mt-8 text-xl font-normal">
+																	{name}
+																</h3>
+																<p className="text-sm text-base-content/75">
+																	{description}
+																</p>
+																<div className="card-actions mt-4">
+																	<a
+																		className="btn btn-ghost btn-sm px-0"
+																		href="#contact"
+																	>
+																		View record{" "}
+																		<ArrowUpRight className="size-4" />
+																	</a>
+																</div>
+															</div>
+														</article>
+													))}
+												</div>
+											</section>
+											<section
+												id="about"
+												className="terminal-section grid gap-8 py-14 sm:grid-cols-2 sm:py-20"
+											>
+												<h2 className="text-2xl font-normal sm:text-3xl">
+													HUMAN INTERFACE,
+													<br />
+													MACHINE PRECISION.
+												</h2>
+												<p className="max-w-xl text-base leading-7 text-base-content/75">
+													I am Raphael "Jans" Caballegan, a full-stack developer
+													focused on elegant products, maintainable systems, and
+													the space where the two meet.
+												</p>
+											</section>
+										</main>
+									) : (
+										<Archive onReturnHome={() => navigate("home")} />
+									)}
+									<footer
+										id="contact"
+										className="terminal-section flex flex-col gap-5 pt-6 text-sm sm:flex-row sm:items-center sm:justify-between"
+									>
+										<p className="terminal-label">
+											COPYRIGHT {new Date().getFullYear()} // JANS CABALLEGAN
+										</p>
+										<div className="flex gap-4">
+											<a
+												className="btn btn-ghost btn-sm"
+												href="https://github.com/arcsine0"
+												target="_blank"
+												rel="noreferrer"
+											>
+												<Github className="size-4" /> GitHub
+											</a>
+											<a
+												className="btn btn-ghost btn-sm"
+												href="mailto:hello@janscabs.dev"
+											>
+												<Mail className="size-4" /> Email
+											</a>
+										</div>
+									</footer>
+								</div>
+								{flash > 0 && <span className="terminal-flash" key={flash} />}
 							</div>
-							<span className="terminal-flash" key={flash} />
-						</div>
+						</Suspense>
 					</VHS>
 				</div>
 			</div>

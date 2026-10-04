@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Oxanium:wght@700;800&family=Share+Tech+Mono&family=Space+Mono:wght@400;700&display=swap");
 @import "tailwindcss";
 @plugin "daisyui";
 @plugin "daisyui/theme" {
@@ -117,6 +117,7 @@ body {
 	border: 1px solid rgb(117 255 162 / 0.68);
 	border-radius: 0;
 	background: #061109;
+	box-shadow: 0 0 10px rgb(71 255 125 / 0.28);
 }
 .crt-display > div {
 	scrollbar-color: rgb(95 210 125 / 0.72) rgb(3 22 11 / 0.88);
@@ -193,6 +194,40 @@ body {
 	position: absolute;
 	z-index: 30;
 	animation: terminal-flash 280ms steps(2, end);
+}
+.terminal-loader {
+	display: grid;
+	min-height: 100%;
+	place-items: center;
+	background: #061109;
+}
+.terminal-loader-content {
+	display: grid;
+	width: min(42rem, 82vw);
+	justify-items: center;
+	gap: 0.8rem;
+}
+.terminal-loader-logo {
+	margin: 0;
+	color: oklch(0.79 0.22 145);
+	font-family: "Oxanium", "Share Tech Mono", ui-monospace, monospace;
+	font-size: clamp(3rem, 11vw, 7rem);
+	font-style: italic;
+	font-weight: 800;
+	letter-spacing: 0.035em;
+	line-height: 1;
+	text-shadow: 0 0 12px rgb(71 255 125 / 0.46);
+	transform: skewX(-10deg);
+}
+.terminal-loader-progress {
+	height: 0.5rem;
+	width: min(18rem, 100%);
+	border: 1px solid rgb(117 255 162 / 0.52);
+	box-shadow: 0 0 8px rgb(71 255 125 / 0.22);
+}
+.terminal-loader-status {
+	margin: 0;
+	text-align: center;
 }
 
 @keyframes terminal-flash {
