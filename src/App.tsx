@@ -1,51 +1,21 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { useState } from "react";
+import { ArrowLeft, ArrowUpRight, Github, Mail, Terminal } from "lucide-react";
+import GlyphRain from "./components/canvasui/GlyphRain";
+import VHS from "./components/canvasui/VHS";
 
-import { motion, AnimatePresence } from "framer-motion";
-import Home from "./pages/Home";
-import ProjectDetails from "./pages/ProjectDetails";
-import SplashScreen from "./components/SplashScreen";
+const projects = [["01", "SmartTicket", "A considered ticketing experience."], ["02", "Cryptodw", "A clean crypto dashboard."], ["03", "Kaquizz", "A playful learning platform."]];
+type Page = "home" | "archive";
 
 function App() {
-	const [showSplash, setShowSplash] = useState(false);
-	const [showContent, setShowContent] = useState(false);
+  const [page, setPage] = useState<Page>("home");
+  const [flash, setFlash] = useState(0);
+  const navigate = (next: Page) => { if (next !== page) { setPage(next); setFlash((value) => value + 1); } };
 
-	useEffect(() => {
-		const hasVisited = localStorage.getItem("hasVisited");
-		if (!hasVisited) {
-			setShowSplash(true);
-			document.body.style.overflow = "hidden";
-			localStorage.setItem("hasVisited", "true");
-		} else {
-			setShowContent(true);
-		}
-	}, []);
-
-	const handleSplashComplete = () => {
-		setShowSplash(false);
-		setShowContent(true);
-		document.body.style.overflow = "unset";
-	};
-
-	return (
-		<Router>
-			<AnimatePresence>
-				{showSplash && <SplashScreen onAnimationComplete={handleSplashComplete} />}
-			</AnimatePresence>
-			<motion.div
-				className="min-h-screen bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
-				initial={{ opacity: 0 }}
-				animate={{ opacity: showContent ? 1 : 0 }}
-				transition={{ duration: 0.5 }}
-			>
-				<Routes>
-					<Route path="/" element={<Home />} />
-					<Route path="/project/:id" element={<ProjectDetails />} />
-				</Routes>
-			</motion.div>
-		</Router>
-	);
+  return <div className="site-shell"><GlyphRain className="ambient-rain" color={[0.02, 0.18, 0.08]} headColor={[0.07, 0.28, 0.13]} cell={24} speed={0.07} density={0.09} trail={0.4} glow={0.12} layers={1} dim={0} light={0.1} stir={0}><div /></GlyphRain><div className="crt-bezel"><div className="crt-housing"><svg className="crt-frame" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M 0 4 Q 50 0 100 4 Q 104 50 100 96 Q 50 100 0 96 Q -4 50 0 4 Z" /></svg><VHS className="crt-display" barrel={0} scanlines={0.18} grain={0.12} vignette={0.45} saturation={0.45}><div className="terminal-app"><div className="mx-auto min-h-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
+    <header className="navbar terminal-panel px-4 sm:px-6"><div className="navbar-start gap-3"><Terminal aria-hidden="true" className="size-5 text-primary" /><button className="text-sm font-bold tracking-[0.16em] sm:text-base" onClick={() => navigate("home")}>JANS//DEV</button></div><nav className="navbar-end gap-4 text-xs tracking-[0.14em] sm:gap-6 sm:text-sm" aria-label="Primary navigation"><button className="link link-hover" onClick={() => navigate("home")}>[HOME]</button><button className="link link-hover" onClick={() => navigate("archive")}>[ARCHIVE]</button><a className="link link-hover" href="mailto:hello@janscabs.dev">[CONTACT]</a></nav></header>
+    {page === "home" ? <main id="top"><section className="hero min-h-[58vh] py-12 sm:py-20"><div className="hero-content w-full max-w-none items-end justify-between gap-10 p-0 max-lg:flex-col max-lg:items-start lg:flex-row"><div className="max-w-3xl"><p className="terminal-label mb-5">SYS.ACCESS // FULL-STACK TYPESCRIPT DEVELOPER</p><h1 className="text-5xl font-normal leading-[0.92] tracking-[-0.05em] text-base-content sm:text-7xl lg:text-8xl">Building useful things for the internet.</h1><p className="mt-7 max-w-xl text-base leading-7 text-base-content/75">I design and ship clear, resilient web experiences where thoughtful interface work meets reliable engineering.</p></div><aside className="card card-border terminal-panel w-full max-w-sm"><div className="card-body gap-4 p-5"><p className="terminal-label">// OPERATOR STATUS</p><p className="text-lg">ONLINE / AVAILABLE</p><div className="terminal-rule" /><p className="text-sm text-base-content/75">Based in the Philippines.<br />Working worldwide.</p><div className="card-actions mt-2"><a className="btn btn-primary btn-sm" href="mailto:hello@janscabs.dev">Open channel <ArrowUpRight className="size-4" /></a></div></div></aside></div></section><section id="work" className="terminal-section py-14 sm:py-20"><div className="mb-8 flex items-baseline justify-between"><h2 className="text-2xl font-normal sm:text-3xl">SELECTED WORK</h2><span className="terminal-label">03 RECORDS</span></div><div className="grid gap-4 md:grid-cols-3">{projects.map(([number, name, description]) => <article className="card card-border terminal-panel" key={number}><div className="card-body p-6"><p className="terminal-label">REC.{number}</p><h3 className="card-title mt-8 text-xl font-normal">{name}</h3><p className="text-sm text-base-content/75">{description}</p><div className="card-actions mt-4"><a className="btn btn-ghost btn-sm px-0" href="#contact">View record <ArrowUpRight className="size-4" /></a></div></div></article>)}</div></section><section id="about" className="terminal-section grid gap-8 py-14 sm:grid-cols-2 sm:py-20"><h2 className="text-2xl font-normal sm:text-3xl">HUMAN INTERFACE,<br />MACHINE PRECISION.</h2><p className="max-w-xl text-base leading-7 text-base-content/75">I am Raphael "Jans" Caballegan, a full-stack developer focused on elegant products, maintainable systems, and the space where the two meet.</p></section></main> : <main className="flex min-h-[70vh] items-center justify-center py-12"><section className="card card-border terminal-panel w-full max-w-2xl"><div className="card-body gap-6 p-8 sm:p-12"><p className="terminal-label">ARCHIVE.NODE // PLACEHOLDER</p><h1 className="card-title text-3xl font-normal sm:text-5xl">TRANSMISSION LOG</h1><div className="terminal-rule" /><p className="max-w-lg leading-7 text-base-content/75">This placeholder screen exists to test the terminal flash transition. Future case studies, experiments, and field notes will live here.</p><div className="card-actions"><button className="btn btn-ghost btn-sm" onClick={() => navigate("home")}><ArrowLeft className="size-4" /> Return to home</button></div></div></section></main>}
+    <footer id="contact" className="terminal-section flex flex-col gap-5 pt-6 text-sm sm:flex-row sm:items-center sm:justify-between"><p className="terminal-label">COPYRIGHT {new Date().getFullYear()} // JANS CABALLEGAN</p><div className="flex gap-4"><a className="btn btn-ghost btn-sm" href="https://github.com/arcsine0" target="_blank" rel="noreferrer"><Github className="size-4" /> GitHub</a><a className="btn btn-ghost btn-sm" href="mailto:hello@janscabs.dev"><Mail className="size-4" /> Email</a></div></footer>
+  </div><span className="terminal-flash" key={flash} /></div></VHS></div></div></div>;
 }
 
 export default App;
-

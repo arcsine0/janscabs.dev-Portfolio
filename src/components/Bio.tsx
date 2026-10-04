@@ -9,7 +9,7 @@ export default function Bio() {
             <CardContent className="p-6 space-y-4">
                 <div className="flex justify-center">
                     <Avatar className="w-32 h-32">
-                        <AvatarImage src="/avatar.jpg" alt="Jans Caballegan" />
+                        <AvatarImage src="/avatar2.jpg" alt="Jans Caballegan" />
                         <AvatarFallback>JC</AvatarFallback>
                     </Avatar>
                 </div>

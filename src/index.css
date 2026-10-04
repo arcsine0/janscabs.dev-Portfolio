@@ -1,86 +1,36 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-	:root {
-		--background: 0 0% 100%;
-		--foreground: 240 10% 3.9%;
-		--card: 0 0% 100%;
-		--card-foreground: 240 10% 3.9%;
-		--popover: 0 0% 100%;
-		--popover-foreground: 240 10% 3.9%;
-		--primary: 240 5.9% 10%;
-		--primary-foreground: 0 0% 98%;
-		--secondary: 240 4.8% 95.9%;
-		--secondary-foreground: 240 5.9% 10%;
-		--muted: 240 4.8% 95.9%;
-		--muted-foreground: 240 3.8% 46.1%;
-		--accent: 240 4.8% 95.9%;
-		--accent-foreground: 240 5.9% 10%;
-		--destructive: 0 84.2% 60.2%;
-		--destructive-foreground: 0 0% 98%;
-		--border: 240 5.9% 90%;
-		--input: 240 5.9% 90%;
-		--ring: 240 10% 3.9%;
-		--chart-1: 12 76% 61%;
-		--chart-2: 173 58% 39%;
-		--chart-3: 197 37% 24%;
-		--chart-4: 43 74% 66%;
-		--chart-5: 27 87% 67%;
-		--radius: 0.5rem;
-		--sidebar-background: 0 0% 98%;
-		--sidebar-foreground: 240 5.3% 26.1%;
-		--sidebar-primary: 240 5.9% 10%;
-		--sidebar-primary-foreground: 0 0% 98%;
-		--sidebar-accent: 240 4.8% 95.9%;
-		--sidebar-accent-foreground: 240 5.9% 10%;
-		--sidebar-border: 220 13% 91%;
-		--sidebar-ring: 217.2 91.2% 59.8%
-	}
-
-	.dark {
-		--background: 240 10% 3.9%;
-		--foreground: 0 0% 98%;
-		--card: 240 10% 3.9%;
-		--card-foreground: 0 0% 98%;
-		--popover: 240 10% 3.9%;
-		--popover-foreground: 0 0% 98%;
-		--primary: 0 0% 98%;
-		--primary-foreground: 240 5.9% 10%;
-		--secondary: 240 3.7% 15.9%;
-		--secondary-foreground: 0 0% 98%;
-		--muted: 240 3.7% 15.9%;
-		--muted-foreground: 240 5% 64.9%;
-		--accent: 240 3.7% 15.9%;
-		--accent-foreground: 0 0% 98%;
-		--destructive: 0 62.8% 30.6%;
-		--destructive-foreground: 0 0% 98%;
-		--border: 240 3.7% 15.9%;
-		--input: 240 3.7% 15.9%;
-		--ring: 240 4.9% 83.9%;
-		--chart-1: 220 70% 50%;
-		--chart-2: 160 60% 45%;
-		--chart-3: 30 80% 55%;
-		--chart-4: 280 65% 60%;
-		--chart-5: 340 75% 55%;
-		--sidebar-background: 240 5.9% 10%;
-		--sidebar-foreground: 240 4.8% 95.9%;
-		--sidebar-primary: 224.3 76.3% 48%;
-		--sidebar-primary-foreground: 0 0% 100%;
-		--sidebar-accent: 240 3.7% 15.9%;
-		--sidebar-accent-foreground: 240 4.8% 95.9%;
-		--sidebar-border: 240 3.7% 15.9%;
-		--sidebar-ring: 217.2 91.2% 59.8%
-	}
+@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:wght@400;700&display=swap");
+@import "tailwindcss";
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: "terminal"; default: true; prefersdark: true; color-scheme: dark;
+  --color-base-100: oklch(0.08 0.018 145); --color-base-200: oklch(0.11 0.025 145); --color-base-300: oklch(0.15 0.032 145); --color-base-content: oklch(0.88 0.12 145); --color-primary: oklch(0.79 0.22 145); --color-primary-content: oklch(0.1 0.025 145); --color-secondary: oklch(0.66 0.13 145); --color-secondary-content: oklch(0.1 0.025 145); --color-accent: oklch(0.73 0.18 145); --color-accent-content: oklch(0.1 0.025 145); --color-neutral: oklch(0.18 0.03 145); --color-neutral-content: oklch(0.88 0.12 145); --color-info: oklch(0.75 0.12 220); --color-info-content: oklch(0.1 0.025 145); --color-success: oklch(0.79 0.22 145); --color-success-content: oklch(0.1 0.025 145); --color-warning: oklch(0.82 0.16 90); --color-warning-content: oklch(0.1 0.025 145); --color-error: oklch(0.67 0.22 25); --color-error-content: oklch(0.1 0.025 145);
+  --radius-selector: 0rem; --radius-field: 0rem; --radius-box: 0rem; --size-selector: 0.25rem; --size-field: 0.25rem; --border: 1px; --depth: 0; --noise: 0;
 }
+:root { font-family: "Share Tech Mono", "Cascadia Mono", ui-monospace, monospace; background: #000; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; overflow: hidden; background: #031006; }
+.site-shell { height: 100dvh; min-height: 0; overflow: hidden; position: relative; background: #031006; }
+.ambient-rain { height: 100dvh; inset: 0; pointer-events: none; position: fixed !important; width: 100vw; z-index: 0; }
+.crt-bezel { box-sizing: border-box; display: flex; height: 100dvh; justify-content: center; min-height: 0; padding: clamp(14px, 4vw, 52px); position: relative; z-index: 1; }
+.crt-housing { box-sizing: border-box; height: 100%; min-height: 0; padding: clamp(10px, 1.8vw, 24px); position: relative; width: 100%; }
+.crt-frame { height: calc(100% - clamp(20px, 3vw, 36px)); left: 50%; overflow: visible; pointer-events: none; position: absolute; top: clamp(10px, 1.5vw, 18px); transform: translateX(-50%); width: min(calc(100% - clamp(20px, 4vw, 56px)), 1440px); z-index: 25; }
+.crt-frame path { fill: none; stroke: rgb(117 255 162 / 0.72); stroke-linecap: round; stroke-width: 1.5; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 5px rgb(71 255 125 / 0.24)); }
+.crt-display { height: 100%; min-height: 0; width: min(100%, 1440px); margin-inline: auto; overflow: hidden; position: relative; z-index: 2; border: 0; border-radius: 22% 22% 18% 18% / 5% 5% 4% 4%; background: #061109; }
+.crt-display > div { scrollbar-color: rgb(95 210 125 / 0.72) rgb(3 22 11 / 0.88); scrollbar-width: thin; }
+.crt-display > div::-webkit-scrollbar { width: 7px; }
+.crt-display > div::-webkit-scrollbar-track { background: rgb(3 22 11 / 0.88); border-left: 1px solid rgb(74 170 100 / 0.22); }
+.crt-display > div::-webkit-scrollbar-thumb { background: linear-gradient(90deg, rgb(50 136 75 / 0.85), rgb(116 236 148 / 0.92), rgb(50 136 75 / 0.85)); border: 1px solid rgb(154 255 183 / 0.48); border-radius: 999px; box-shadow: 0 0 7px rgb(74 255 123 / 0.44); }
+.crt-display::after { content: ""; position: absolute; z-index: 20; inset: 0; pointer-events: none; background: repeating-linear-gradient(to bottom, rgb(122 255 162 / 0.035) 0, rgb(122 255 162 / 0.035) 1px, rgb(0 0 0 / 0.035) 1px, rgb(0 0 0 / 0.035) 3px); mix-blend-mode: screen; }
+.terminal-app { min-height: 100%; position: relative; background-color: #061109; background-image: linear-gradient(rgb(89 255 139 / 0.045) 1px, transparent 1px), linear-gradient(90deg, rgb(89 255 139 / 0.035) 1px, transparent 1px); background-size: 24px 24px; }
+.terminal-panel { border-color: rgb(109 255 150 / 0.72); border-radius: 0; background: rgb(5 25 14 / 0.72); box-shadow: inset 0 0 24px rgb(23 255 103 / 0.04), 0 0 14px rgb(23 255 103 / 0.08); }
+.terminal-section { border-top: 1px solid rgb(109 255 150 / 0.48); }
+.terminal-label { color: oklch(0.79 0.22 145); font-family: "Space Mono", ui-monospace, monospace; font-size: 0.68rem; letter-spacing: 0.12em; line-height: 1.4; }
+.terminal-rule { height: 1px; width: 100%; background: rgb(109 255 150 / 0.48); }
+.terminal-flash { inset: 0; pointer-events: none; position: absolute; z-index: 30; animation: terminal-flash 280ms steps(2, end); }
 
-@layer base {
-	* {
-		@apply border-border;
-	}
+@keyframes terminal-flash { 0% { background: rgb(181 255 203 / 0); opacity: 0; } 18% { background: rgb(181 255 203 / 0.72); opacity: 1; } 44% { background: rgb(60 255 119 / 0.26); opacity: 0.45; } 100% { background: transparent; opacity: 0; } }
 
-	body {
-		@apply bg-background text-foreground;
-	}
+@media (max-width: 1024px) {
+  .crt-bezel { padding: 10px; }
+  .crt-housing { padding: 6px; }
 }
