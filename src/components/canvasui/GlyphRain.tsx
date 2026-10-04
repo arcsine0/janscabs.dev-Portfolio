@@ -1,210 +1,221 @@
 "use client";
 
 import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
+	useEffect,
+	useRef,
+	useState,
+	useSyncExternalStore,
+	type ReactNode,
 } from "react";
 
-const canvasDimensionLimits = new WeakMap<WebGLRenderingContext | WebGL2RenderingContext, number>();
+const canvasDimensionLimits = new WeakMap<
+	WebGLRenderingContext | WebGL2RenderingContext,
+	number
+>();
 
 /** Keep the existing DPR budget, then account for browser pinch zoom. */
 function getCanvasPixelRatio(
-  element: HTMLElement,
-  context?: WebGLRenderingContext | WebGL2RenderingContext,
+	element: HTMLElement,
+	context?: WebGLRenderingContext | WebGL2RenderingContext,
 ): number {
-  const scale = window.visualViewport?.scale || 1;
-  const requested = Math.min(window.devicePixelRatio || 1, 2) * scale;
-  const width = Math.max(element.clientWidth, 1);
-  const height = Math.max(element.clientHeight, 1);
-  let maxDimension = 8192;
-  if (context) {
-    let limit = canvasDimensionLimits.get(context);
-    if (limit === undefined) {
-      limit = Math.min(
-        maxDimension,
-        context.getParameter(context.MAX_TEXTURE_SIZE),
-        context.getParameter(context.MAX_RENDERBUFFER_SIZE),
-      );
-      canvasDimensionLimits.set(context, limit);
-    }
-    maxDimension = limit;
-  }
-  // Rendering the full element preserves its CSS position and native input
-  // geometry while panning. Bound allocations when zooming large canvases.
-  return Math.min(
-    requested,
-    maxDimension / Math.max(width, height),
-    Math.sqrt(16_777_216 / (width * height)),
-  );
+	const scale = window.visualViewport?.scale || 1;
+	const requested = Math.min(window.devicePixelRatio || 1, 2) * scale;
+	const width = Math.max(element.clientWidth, 1);
+	const height = Math.max(element.clientHeight, 1);
+	let maxDimension = 8192;
+	if (context) {
+		let limit = canvasDimensionLimits.get(context);
+		if (limit === undefined) {
+			limit = Math.min(
+				maxDimension,
+				context.getParameter(context.MAX_TEXTURE_SIZE),
+				context.getParameter(context.MAX_RENDERBUFFER_SIZE),
+			);
+			canvasDimensionLimits.set(context, limit);
+		}
+		maxDimension = limit;
+	}
+	// Rendering the full element preserves its CSS position and native input
+	// geometry while panning. Bound allocations when zooming large canvases.
+	return Math.min(
+		requested,
+		maxDimension / Math.max(width, height),
+		Math.sqrt(16_777_216 / (width * height)),
+	);
 }
 
 /** Pinch zoom changes visualViewport without resizing the element's CSS box. */
 function createCanvasResizeObserver(onResize: () => void) {
-  const viewport = window.visualViewport;
-  let frame = 0;
-  let disconnected = false;
-  const schedule = () => {
-    if (frame || disconnected) return;
-    frame = requestAnimationFrame(() => {
-      frame = 0;
-      onResize();
-    });
-  };
-  const observer = new ResizeObserver(schedule);
-  window.addEventListener("resize", schedule, { passive: true });
-  viewport?.addEventListener("resize", schedule, { passive: true });
-  return {
-    observe(element: Element, options?: ResizeObserverOptions) {
-      observer.observe(element, options);
-    },
-    unobserve(element: Element) {
-      observer.unobserve(element);
-    },
-    disconnect() {
-      disconnected = true;
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-      window.removeEventListener("resize", schedule);
-      viewport?.removeEventListener("resize", schedule);
-    },
-  };
+	const viewport = window.visualViewport;
+	let frame = 0;
+	let disconnected = false;
+	const schedule = () => {
+		if (frame || disconnected) return;
+		frame = requestAnimationFrame(() => {
+			frame = 0;
+			onResize();
+		});
+	};
+	const observer = new ResizeObserver(schedule);
+	window.addEventListener("resize", schedule, { passive: true });
+	viewport?.addEventListener("resize", schedule, { passive: true });
+	return {
+		observe(element: Element, options?: ResizeObserverOptions) {
+			observer.observe(element, options);
+		},
+		unobserve(element: Element) {
+			observer.unobserve(element);
+		},
+		disconnect() {
+			disconnected = true;
+			observer.disconnect();
+			cancelAnimationFrame(frame);
+			window.removeEventListener("resize", schedule);
+			viewport?.removeEventListener("resize", schedule);
+		},
+	};
 }
 
 type HtmlInCanvasContext = CanvasRenderingContext2D & {
-  drawElementImage: (element: Element, x: number, y: number) => DOMMatrix | void;
+	drawElementImage: (
+		element: Element,
+		x: number,
+		y: number,
+	) => DOMMatrix | void;
 };
 
 type HtmlInCanvasElement = HTMLCanvasElement & {
-  updateElementGeometry?: (
-    element: Element,
-    options: { canvasTransform: DOMMatrix },
-  ) => void;
+	updateElementGeometry?: (
+		element: Element,
+		options: { canvasTransform: DOMMatrix },
+	) => void;
 };
 
 /** Configure the capture subtree for both generations of the experimental API. */
 function prepareHtmlInCanvas(source: HTMLCanvasElement, content: HTMLElement) {
-  if ("content" in source) {
-    source.setAttribute("content", "drawable");
-    content.setAttribute("drawable", "");
-  } else {
-    source.setAttribute("layoutsubtree", "");
-  }
+	if ("content" in source) {
+		source.setAttribute("content", "drawable");
+		content.setAttribute("drawable", "");
+	} else {
+		source.setAttribute("layoutsubtree", "");
+	}
 }
 
 /** Capture pixels and keep the native DOM hit-test region aligned with them. */
 function drawHtmlInCanvas(
-  source: HTMLCanvasElement,
-  context: CanvasRenderingContext2D,
-  content: HTMLElement,
+	source: HTMLCanvasElement,
+	context: CanvasRenderingContext2D,
+	content: HTMLElement,
 ) {
-  const transform = (context as HtmlInCanvasContext).drawElementImage(content, 0, 0);
-  const canvas = source as HtmlInCanvasElement;
-  // Chrome 154 decoupled geometry from drawing before enabling automatic 2D
-  // synchronization. Older versions have no update method; newer versions
-  // synchronize automatically and return void. Use the returned matrix as-is:
-  // drawElementImage already accounts for the canvas's pixel density.
-  if (transform && typeof canvas.updateElementGeometry === "function") {
-    canvas.updateElementGeometry(content, { canvasTransform: transform });
-  }
+	const transform = (context as HtmlInCanvasContext).drawElementImage(
+		content,
+		0,
+		0,
+	);
+	const canvas = source as HtmlInCanvasElement;
+	// Chrome 154 decoupled geometry from drawing before enabling automatic 2D
+	// synchronization. Older versions have no update method; newer versions
+	// synchronize automatically and return void. Use the returned matrix as-is:
+	// drawElementImage already accounts for the canvas's pixel density.
+	if (transform && typeof canvas.updateElementGeometry === "function") {
+		canvas.updateElementGeometry(content, { canvasTransform: transform });
+	}
 }
 
 export interface GlyphRainOptions {
-  /** Characters used for the falling glyphs. Deduplicated into a glyph atlas. */
-  charset?: string;
-  /** Size of one glyph cell in CSS pixels (8 to 64). */
-  cell?: number;
-  /** Rain color as [r, g, b] in 0-1 range. */
-  color?: [number, number, number];
-  /** Color of the bright head glyph as [r, g, b] in 0-1 range. */
-  headColor?: [number, number, number];
-  /** Fall speed in screen heights per second (0.05 to 3). */
-  speed?: number;
-  /** Per-column speed variation (0 to 1). */
-  speedVariance?: number;
-  /** Fraction of drops that spawn each cycle (0 to 1). */
-  density?: number;
-  /** Length multiplier for the fading trails (0.2 to 3). */
-  trail?: number;
-  /** Brightness of the drop heads and the light they cast (0 to 3). */
-  glow?: number;
-  /** How fast glyphs mutate into other characters (0 to 4). */
-  mutate?: number;
-  /** Random brightness flicker of the streaks (0 to 1). */
-  flicker?: number;
-  /** Parallax rain layers behind the front one (1 to 3). */
-  layers?: number;
-  /** How much the unlit page dims (0 to 1). 0 keeps it fully readable. */
-  dim?: number;
-  /** Strength of the light the drops shine onto the page (0 to 3). */
-  light?: number;
-  /** Radius of each drop's light pool in CSS pixels (20 to 600). */
-  lightRadius?: number;
-  /** How high above the page the lights float, in CSS pixels. Higher is softer. */
-  lightHeight?: number;
-  /** Embossed 3D shading of the page under the lights (0 to 2). */
-  relief?: number;
-  /** How strongly the cursor stirs the rain as it passes (0 to 1). 0 disables it. */
-  stir?: number;
-  /** How far the stirring reaches to either side of the cursor, in CSS pixels. */
-  stirRadius?: number;
-  /** Seconds the stirred wake takes to settle back to its own rhythm. */
-  settle?: number;
+	/** Characters used for the falling glyphs. Deduplicated into a glyph atlas. */
+	charset?: string;
+	/** Size of one glyph cell in CSS pixels (8 to 64). */
+	cell?: number;
+	/** Rain color as [r, g, b] in 0-1 range. */
+	color?: [number, number, number];
+	/** Color of the bright head glyph as [r, g, b] in 0-1 range. */
+	headColor?: [number, number, number];
+	/** Fall speed in screen heights per second (0.05 to 3). */
+	speed?: number;
+	/** Per-column speed variation (0 to 1). */
+	speedVariance?: number;
+	/** Fraction of drops that spawn each cycle (0 to 1). */
+	density?: number;
+	/** Length multiplier for the fading trails (0.2 to 3). */
+	trail?: number;
+	/** Brightness of the drop heads and the light they cast (0 to 3). */
+	glow?: number;
+	/** How fast glyphs mutate into other characters (0 to 4). */
+	mutate?: number;
+	/** Random brightness flicker of the streaks (0 to 1). */
+	flicker?: number;
+	/** Parallax rain layers behind the front one (1 to 3). */
+	layers?: number;
+	/** How much the unlit page dims (0 to 1). 0 keeps it fully readable. */
+	dim?: number;
+	/** Strength of the light the drops shine onto the page (0 to 3). */
+	light?: number;
+	/** Radius of each drop's light pool in CSS pixels (20 to 600). */
+	lightRadius?: number;
+	/** How high above the page the lights float, in CSS pixels. Higher is softer. */
+	lightHeight?: number;
+	/** Embossed 3D shading of the page under the lights (0 to 2). */
+	relief?: number;
+	/** How strongly the cursor stirs the rain as it passes (0 to 1). 0 disables it. */
+	stir?: number;
+	/** How far the stirring reaches to either side of the cursor, in CSS pixels. */
+	stirRadius?: number;
+	/** Seconds the stirred wake takes to settle back to its own rhythm. */
+	settle?: number;
 }
 
 export interface GlyphRainElements {
-  /** Canvas with layoutsubtree that hosts the HTML content. */
-  source: HTMLCanvasElement;
-  /** The element inside the source canvas that gets captured. */
-  content: HTMLElement;
-  /** Canvas the WebGL effect renders to. */
-  output: HTMLCanvasElement;
+	/** Canvas with layoutsubtree that hosts the HTML content. */
+	source: HTMLCanvasElement;
+	/** The element inside the source canvas that gets captured. */
+	content: HTMLElement;
+	/** Canvas the WebGL effect renders to. */
+	output: HTMLCanvasElement;
 }
 
 export interface GlyphRainInstance {
-  /** Update effect options live. */
-  setOptions: (options: GlyphRainOptions) => void;
-  /** Re-read canvas size. Call when the element is resized. */
-  resize: () => void;
-  /** Stop the loop and release all GPU resources. */
-  destroy: () => void;
+	/** Update effect options live. */
+	setOptions: (options: GlyphRainOptions) => void;
+	/** Re-read canvas size. Call when the element is resized. */
+	resize: () => void;
+	/** Stop the loop and release all GPU resources. */
+	destroy: () => void;
 }
 
 const DEFAULT_CHARSET =
-  "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789Z*+-<>¦=:.";
+	"ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789Z*+-<>¦=:.";
 
 const DEFAULTS: Required<GlyphRainOptions> = {
-  charset: DEFAULT_CHARSET,
-  cell: 15,
-  color: [0.267, 0.455, 1],
-  headColor: [0.169, 0.416, 1],
-  speed: 0.2,
-  speedVariance: 0.5,
-  density: 0.15,
-  trail: 0.65,
-  glow: 1.75,
-  mutate: 0,
-  flicker: 0,
-  layers: 2,
-  dim: 0.5,
-  light: 2.8,
-  lightRadius: 240,
-  lightHeight: 172,
-  relief: 0.05,
-  stir: 0.7,
-  stirRadius: 260,
-  settle: 0.9,
+	charset: DEFAULT_CHARSET,
+	cell: 15,
+	color: [0.267, 0.455, 1],
+	headColor: [0.169, 0.416, 1],
+	speed: 0.2,
+	speedVariance: 0.5,
+	density: 0.15,
+	trail: 0.65,
+	glow: 1.75,
+	mutate: 0,
+	flicker: 0,
+	layers: 2,
+	dim: 0.5,
+	light: 2.8,
+	lightRadius: 240,
+	lightHeight: 172,
+	relief: 0.05,
+	stir: 0.7,
+	stirRadius: 260,
+	settle: 0.9,
 };
 
 type PaintableCanvas = HTMLCanvasElement & {
-  onpaint?: (() => void) | null;
-  requestPaint?: () => void;
+	onpaint?: (() => void) | null;
+	requestPaint?: () => void;
 };
 
 type ElementImageContext = CanvasRenderingContext2D & {
-  drawElementImage?: (element: Element, x: number, y: number) => void;
+	drawElementImage?: (element: Element, x: number, y: number) => void;
 };
 
 const VERT = `#version 300 es
@@ -417,639 +428,639 @@ void main () {
 }`;
 
 export function supportsHtmlInCanvas(): boolean {
-  if (typeof document === "undefined") return false;
-  const probe = document.createElement("canvas") as PaintableCanvas;
-  const ctx = probe.getContext("2d") as ElementImageContext | null;
-  return Boolean(
-    ctx &&
-    typeof ctx.drawElementImage === "function" &&
-    typeof probe.requestPaint === "function",
-  );
+	if (typeof document === "undefined") return false;
+	const probe = document.createElement("canvas") as PaintableCanvas;
+	const ctx = probe.getContext("2d") as ElementImageContext | null;
+	return Boolean(
+		ctx &&
+			typeof ctx.drawElementImage === "function" &&
+			typeof probe.requestPaint === "function",
+	);
 }
 
 function buildAtlas(charset: string): {
-  canvas: HTMLCanvasElement;
-  count: number;
-  grid: number;
+	canvas: HTMLCanvasElement;
+	count: number;
+	grid: number;
 } {
-  const glyphs = Array.from(new Set(Array.from(charset))).filter(
-    (g) => g.trim().length > 0,
-  );
-  if (glyphs.length === 0) glyphs.push("0", "1");
-  const count = glyphs.length;
-  const grid = Math.max(Math.ceil(Math.sqrt(count)), 1);
-  const cellPx = 64;
-  const canvas = document.createElement("canvas");
-  canvas.width = grid * cellPx;
-  canvas.height = grid * cellPx;
-  const ctx = canvas.getContext("2d")!;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = `600 ${Math.round(cellPx * 0.72)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
-  for (let i = 0; i < count; i++) {
-    const x = ((i % grid) + 0.5) * cellPx;
-    const y = (Math.floor(i / grid) + 0.5) * cellPx;
-    ctx.fillText(glyphs[i], x, y);
-  }
-  return { canvas, count, grid };
+	const glyphs = Array.from(new Set(Array.from(charset))).filter(
+		(g) => g.trim().length > 0,
+	);
+	if (glyphs.length === 0) glyphs.push("0", "1");
+	const count = glyphs.length;
+	const grid = Math.max(Math.ceil(Math.sqrt(count)), 1);
+	const cellPx = 64;
+	const canvas = document.createElement("canvas");
+	canvas.width = grid * cellPx;
+	canvas.height = grid * cellPx;
+	const ctx = canvas.getContext("2d")!;
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = "#ffffff";
+	ctx.textAlign = "center";
+	ctx.textBaseline = "middle";
+	ctx.font = `600 ${Math.round(cellPx * 0.72)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+	for (let i = 0; i < count; i++) {
+		const x = ((i % grid) + 0.5) * cellPx;
+		const y = (Math.floor(i / grid) + 0.5) * cellPx;
+		ctx.fillText(glyphs[i], x, y);
+	}
+	return { canvas, count, grid };
 }
 
 export function createGlyphRain(
-  elements: GlyphRainElements,
-  options: GlyphRainOptions = {},
+	elements: GlyphRainElements,
+	options: GlyphRainOptions = {},
 ): GlyphRainInstance | null {
-  const config = { ...DEFAULTS, ...options };
-  const { source, content, output } = elements;
+	const config = { ...DEFAULTS, ...options };
+	const { source, content, output } = elements;
 
-  const gl = output.getContext("webgl2", {
-    alpha: true,
-    depth: false,
-    stencil: false,
-    antialias: false,
-    premultipliedAlpha: true,
-  });
-  if (!gl || gl.isContextLost()) return null;
+	const gl = output.getContext("webgl2", {
+		alpha: true,
+		depth: false,
+		stencil: false,
+		antialias: false,
+		premultipliedAlpha: true,
+	});
+	if (!gl || gl.isContextLost()) return null;
 
-  const sourceCtx = source.getContext("2d") as ElementImageContext | null;
-  const paintable = source as PaintableCanvas;
-  const htmlInCanvas = Boolean(
-    sourceCtx &&
-    typeof sourceCtx.drawElementImage === "function" &&
-    typeof paintable.requestPaint === "function",
-  );
+	const sourceCtx = source.getContext("2d") as ElementImageContext | null;
+	const paintable = source as PaintableCanvas;
+	const htmlInCanvas = Boolean(
+		sourceCtx &&
+			typeof sourceCtx.drawElementImage === "function" &&
+			typeof paintable.requestPaint === "function",
+	);
 
-  if (htmlInCanvas) prepareHtmlInCanvas(source, content);
+	if (htmlInCanvas) prepareHtmlInCanvas(source, content);
 
-  let contentDirty = false;
-  let pageLum = 0;
-  let wake = () => {};
+	let contentDirty = false;
+	let pageLum = 0;
+	let wake = () => {};
 
-  function readPageLum(): number {
-    try {
-      const probe = document.createElement("canvas");
-      probe.width = probe.height = 1;
-      const pctx = probe.getContext("2d", { willReadFrequently: true });
-      if (!pctx) return 0;
-      let el: Element | null = content;
-      while (el instanceof Element) {
-        const bgColor = getComputedStyle(el).backgroundColor;
-        if (bgColor && bgColor !== "transparent") {
-          pctx.clearRect(0, 0, 1, 1);
-          pctx.fillStyle = bgColor;
-          pctx.fillRect(0, 0, 1, 1);
-          const d = pctx.getImageData(0, 0, 1, 1).data;
-          if (d[3] > 128) {
-            return (0.2126 * d[0] + 0.7152 * d[1] + 0.0722 * d[2]) / 255;
-          }
-        }
-        el = el.parentElement;
-      }
-    } catch {}
-    return 0;
-  }
+	function readPageLum(): number {
+		try {
+			const probe = document.createElement("canvas");
+			probe.width = probe.height = 1;
+			const pctx = probe.getContext("2d", { willReadFrequently: true });
+			if (!pctx) return 0;
+			let el: Element | null = content;
+			while (el instanceof Element) {
+				const bgColor = getComputedStyle(el).backgroundColor;
+				if (bgColor && bgColor !== "transparent") {
+					pctx.clearRect(0, 0, 1, 1);
+					pctx.fillStyle = bgColor;
+					pctx.fillRect(0, 0, 1, 1);
+					const d = pctx.getImageData(0, 0, 1, 1).data;
+					if (d[3] > 128) {
+						return (0.2126 * d[0] + 0.7152 * d[1] + 0.0722 * d[2]) / 255;
+					}
+				}
+				el = el.parentElement;
+			}
+		} catch {}
+		return 0;
+	}
 
-  if (htmlInCanvas) {
-    paintable.onpaint = () => {
-      try {
-        sourceCtx!.reset();
-        drawHtmlInCanvas(source, sourceCtx!, content);
-        contentDirty = true;
-        wake();
-      } catch {}
-    };
-  }
+	if (htmlInCanvas) {
+		paintable.onpaint = () => {
+			try {
+				sourceCtx!.reset();
+				drawHtmlInCanvas(source, sourceCtx!, content);
+				contentDirty = true;
+				wake();
+			} catch {}
+		};
+	}
 
-  function compile(type: number, text: string): WebGLShader {
-    const shader = gl!.createShader(type)!;
-    gl!.shaderSource(shader, text);
-    gl!.compileShader(shader);
-    if (!gl!.getShaderParameter(shader, gl!.COMPILE_STATUS)) {
-      console.error("GlyphRain shader error:", gl!.getShaderInfoLog(shader));
-    }
-    return shader;
-  }
+	function compile(type: number, text: string): WebGLShader {
+		const shader = gl!.createShader(type)!;
+		gl!.shaderSource(shader, text);
+		gl!.compileShader(shader);
+		if (!gl!.getShaderParameter(shader, gl!.COMPILE_STATUS)) {
+			console.error("GlyphRain shader error:", gl!.getShaderInfoLog(shader));
+		}
+		return shader;
+	}
 
-  const vertexShader = compile(gl.VERTEX_SHADER, VERT);
-  const fragmentShader = compile(gl.FRAGMENT_SHADER, FRAG);
-  const program = gl.createProgram()!;
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
-  gl.linkProgram(program);
+	const vertexShader = compile(gl.VERTEX_SHADER, VERT);
+	const fragmentShader = compile(gl.FRAGMENT_SHADER, FRAG);
+	const program = gl.createProgram()!;
+	gl.attachShader(program, vertexShader);
+	gl.attachShader(program, fragmentShader);
+	gl.linkProgram(program);
 
-  const uniforms: Record<string, WebGLUniformLocation> = {};
-  const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-  for (let i = 0; i < count; i++) {
-    const info = gl.getActiveUniform(program, i)!;
-    uniforms[info.name] = gl.getUniformLocation(program, info.name)!;
-  }
+	const uniforms: Record<string, WebGLUniformLocation> = {};
+	const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+	for (let i = 0; i < count; i++) {
+		const info = gl.getActiveUniform(program, i)!;
+		uniforms[info.name] = gl.getUniformLocation(program, info.name)!;
+	}
 
-  const quad = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
-    gl.STATIC_DRAW,
-  );
-  gl.enableVertexAttribArray(0);
-  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+	const quad = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+	gl.bufferData(
+		gl.ARRAY_BUFFER,
+		new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+		gl.STATIC_DRAW,
+	);
+	gl.enableVertexAttribArray(0);
+	gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
-  const contentTexture = gl.createTexture()!;
-  gl.bindTexture(gl.TEXTURE_2D, contentTexture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    gl.RGBA,
-    1,
-    1,
-    0,
-    gl.RGBA,
-    gl.UNSIGNED_BYTE,
-    new Uint8Array([0, 0, 0, 0]),
-  );
+	const contentTexture = gl.createTexture()!;
+	gl.bindTexture(gl.TEXTURE_2D, contentTexture);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	gl.texImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RGBA,
+		1,
+		1,
+		0,
+		gl.RGBA,
+		gl.UNSIGNED_BYTE,
+		new Uint8Array([0, 0, 0, 0]),
+	);
 
-  const atlasTexture = gl.createTexture()!;
-  let atlasCount = 1;
-  let atlasGrid = 1;
-  let atlasCharset = "";
+	const atlasTexture = gl.createTexture()!;
+	let atlasCount = 1;
+	let atlasGrid = 1;
+	let atlasCharset = "";
 
-  function syncAtlas() {
-    if (config.charset === atlasCharset) return;
-    atlasCharset = config.charset;
-    const atlas = buildAtlas(config.charset);
-    atlasCount = atlas.count;
-    atlasGrid = atlas.grid;
-    gl!.bindTexture(gl!.TEXTURE_2D, atlasTexture);
-    gl!.texParameteri(
-      gl!.TEXTURE_2D,
-      gl!.TEXTURE_MIN_FILTER,
-      gl!.LINEAR_MIPMAP_LINEAR,
-    );
-    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MAG_FILTER, gl!.LINEAR);
-    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_S, gl!.CLAMP_TO_EDGE);
-    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_T, gl!.CLAMP_TO_EDGE);
-    gl!.texImage2D(
-      gl!.TEXTURE_2D,
-      0,
-      gl!.RGBA,
-      gl!.RGBA,
-      gl!.UNSIGNED_BYTE,
-      atlas.canvas,
-    );
-    gl!.generateMipmap(gl!.TEXTURE_2D);
-  }
+	function syncAtlas() {
+		if (config.charset === atlasCharset) return;
+		atlasCharset = config.charset;
+		const atlas = buildAtlas(config.charset);
+		atlasCount = atlas.count;
+		atlasGrid = atlas.grid;
+		gl!.bindTexture(gl!.TEXTURE_2D, atlasTexture);
+		gl!.texParameteri(
+			gl!.TEXTURE_2D,
+			gl!.TEXTURE_MIN_FILTER,
+			gl!.LINEAR_MIPMAP_LINEAR,
+		);
+		gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MAG_FILTER, gl!.LINEAR);
+		gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_S, gl!.CLAMP_TO_EDGE);
+		gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_T, gl!.CLAMP_TO_EDGE);
+		gl!.texImage2D(
+			gl!.TEXTURE_2D,
+			0,
+			gl!.RGBA,
+			gl!.RGBA,
+			gl!.UNSIGNED_BYTE,
+			atlas.canvas,
+		);
+		gl!.generateMipmap(gl!.TEXTURE_2D);
+	}
 
-  syncAtlas();
+	syncAtlas();
 
-  let dpr = 1;
+	let dpr = 1;
 
-  function syncCanvasSize() {
-    dpr = getCanvasPixelRatio(output, gl!);
-    const width = Math.max(1, Math.round(output.clientWidth * dpr));
-    const height = Math.max(1, Math.round(output.clientHeight * dpr));
-    if (output.width !== width || output.height !== height) {
-      output.width = width;
-      output.height = height;
-    }
-    if (htmlInCanvas) {
-      const sourceWidth = Math.max(1, Math.round(source.clientWidth * dpr));
-      const sourceHeight = Math.max(1, Math.round(source.clientHeight * dpr));
-      if (
-        source.width !== sourceWidth ||
-        source.height !== sourceHeight
-      ) {
-        source.width = sourceWidth;
-        source.height = sourceHeight;
-      }
-      paintable.requestPaint!();
-    }
-  }
+	function syncCanvasSize() {
+		dpr = getCanvasPixelRatio(output, gl!);
+		const width = Math.max(1, Math.round(output.clientWidth * dpr));
+		const height = Math.max(1, Math.round(output.clientHeight * dpr));
+		if (output.width !== width || output.height !== height) {
+			output.width = width;
+			output.height = height;
+		}
+		if (htmlInCanvas) {
+			const sourceWidth = Math.max(1, Math.round(source.clientWidth * dpr));
+			const sourceHeight = Math.max(1, Math.round(source.clientHeight * dpr));
+			if (source.width !== sourceWidth || source.height !== sourceHeight) {
+				source.width = sourceWidth;
+				source.height = sourceHeight;
+			}
+			paintable.requestPaint!();
+		}
+	}
 
-  syncCanvasSize();
+	syncCanvasSize();
 
-  function uploadContent() {
-    if (!htmlInCanvas || !contentDirty) return;
-    contentDirty = false;
-    pageLum = readPageLum();
-    gl!.bindTexture(gl!.TEXTURE_2D, contentTexture);
-    gl!.texImage2D(
-      gl!.TEXTURE_2D,
-      0,
-      gl!.RGBA,
-      gl!.RGBA,
-      gl!.UNSIGNED_BYTE,
-      source,
-    );
-    sourceCtx!.clearRect(0, 0, source.width, source.height);
-  }
+	function uploadContent() {
+		if (!htmlInCanvas || !contentDirty) return;
+		contentDirty = false;
+		pageLum = readPageLum();
+		gl!.bindTexture(gl!.TEXTURE_2D, contentTexture);
+		gl!.texImage2D(
+			gl!.TEXTURE_2D,
+			0,
+			gl!.RGBA,
+			gl!.RGBA,
+			gl!.UNSIGNED_BYTE,
+			source,
+		);
+		sourceCtx!.clearRect(0, 0, source.width, source.height);
+	}
 
-  let time = 7.3;
+	let time = 7.3;
 
-  const WAKE_RES = 256;
-  const wakeCharge = new Float32Array(WAKE_RES);
-  const wakeField = new Float32Array(WAKE_RES * 2);
-  let wakeLive = false;
-  let wakeTouched = false;
-  let pointerX = 0;
-  let tracking = false;
+	const WAKE_RES = 256;
+	const wakeCharge = new Float32Array(WAKE_RES);
+	const wakeField = new Float32Array(WAKE_RES * 2);
+	let wakeLive = false;
+	let wakeTouched = false;
+	let pointerX = 0;
+	let tracking = false;
 
-  const wakeTexture = gl.createTexture()!;
-  gl.bindTexture(gl.TEXTURE_2D, wakeTexture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    gl.RG32F,
-    WAKE_RES,
-    1,
-    0,
-    gl.RG,
-    gl.FLOAT,
-    wakeField,
-  );
+	const wakeTexture = gl.createTexture()!;
+	gl.bindTexture(gl.TEXTURE_2D, wakeTexture);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	gl.texImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RG32F,
+		WAKE_RES,
+		1,
+		0,
+		gl.RG,
+		gl.FLOAT,
+		wakeField,
+	);
 
-  function stirAmount(): number {
-    return Math.min(Math.max(config.stir, 0), 1);
-  }
+	function stirAmount(): number {
+		return Math.min(Math.max(config.stir, 0), 1);
+	}
 
-  function wakeSpan(): number {
-    const width = Math.max(output.clientWidth, 1);
-    const px = Math.min(Math.max(config.stirRadius, 8), 2000);
-    return Math.max(px / width, 1 / WAKE_RES);
-  }
+	function wakeSpan(): number {
+		const width = Math.max(output.clientWidth, 1);
+		const px = Math.min(Math.max(config.stirRadius, 8), 2000);
+		return Math.max(px / width, 1 / WAKE_RES);
+	}
 
-  function stepWake(delta: number) {
-    const stir = stirAmount();
-    const settleT = Math.min(Math.max(config.settle, 0.05), 8);
-    const decay = Math.exp(-delta / settleT);
-    const span = wakeSpan();
-    const drive = stir > 0.001 && !reducedMotion;
-    const track = drive && tracking;
-    let live = false;
-    for (let i = 0; i < WAKE_RES; i++) {
-      let charge = wakeCharge[i] * decay;
-      if (track) {
-        const d = Math.abs((i + 0.5) / WAKE_RES - pointerX) / span;
-        if (d < 1) {
-          const t = 1 - d;
-          const target = t * t * (3 - 2 * t);
-          if (target > charge) charge = target;
-        }
-      }
-      if (charge < 1e-4) charge = 0;
-      wakeCharge[i] = charge;
-      if (charge > 0) {
-        live = true;
-        if (drive) {
-          wakeField[i * 2] += delta * stir * 2.2 * charge;
-          wakeTouched = true;
-        }
-      }
-      wakeField[i * 2 + 1] = charge;
-    }
-    if (!live && !wakeLive) return;
-    wakeLive = live;
-    gl!.bindTexture(gl!.TEXTURE_2D, wakeTexture);
-    gl!.texSubImage2D(
-      gl!.TEXTURE_2D,
-      0,
-      0,
-      0,
-      WAKE_RES,
-      1,
-      gl!.RG,
-      gl!.FLOAT,
-      wakeField,
-    );
-  }
+	function stepWake(delta: number) {
+		const stir = stirAmount();
+		const settleT = Math.min(Math.max(config.settle, 0.05), 8);
+		const decay = Math.exp(-delta / settleT);
+		const span = wakeSpan();
+		const drive = stir > 0.001 && !reducedMotion;
+		const track = drive && tracking;
+		let live = false;
+		for (let i = 0; i < WAKE_RES; i++) {
+			let charge = wakeCharge[i] * decay;
+			if (track) {
+				const d = Math.abs((i + 0.5) / WAKE_RES - pointerX) / span;
+				if (d < 1) {
+					const t = 1 - d;
+					const target = t * t * (3 - 2 * t);
+					if (target > charge) charge = target;
+				}
+			}
+			if (charge < 1e-4) charge = 0;
+			wakeCharge[i] = charge;
+			if (charge > 0) {
+				live = true;
+				if (drive) {
+					wakeField[i * 2] += delta * stir * 2.2 * charge;
+					wakeTouched = true;
+				}
+			}
+			wakeField[i * 2 + 1] = charge;
+		}
+		if (!live && !wakeLive) return;
+		wakeLive = live;
+		gl!.bindTexture(gl!.TEXTURE_2D, wakeTexture);
+		gl!.texSubImage2D(
+			gl!.TEXTURE_2D,
+			0,
+			0,
+			0,
+			WAKE_RES,
+			1,
+			gl!.RG,
+			gl!.FLOAT,
+			wakeField,
+		);
+	}
 
-  function render() {
-    uploadContent();
-    gl!.useProgram(program);
-    gl!.activeTexture(gl!.TEXTURE0);
-    gl!.bindTexture(gl!.TEXTURE_2D, contentTexture);
-    gl!.uniform1i(uniforms.uContent, 0);
-    gl!.activeTexture(gl!.TEXTURE1);
-    gl!.bindTexture(gl!.TEXTURE_2D, atlasTexture);
-    gl!.uniform1i(uniforms.uAtlas, 1);
-    gl!.activeTexture(gl!.TEXTURE2);
-    gl!.bindTexture(gl!.TEXTURE_2D, wakeTexture);
-    gl!.uniform1i(uniforms.uWake, 2);
-    gl!.uniform2f(uniforms.uResolution, output.width, output.height);
-    gl!.uniform1f(uniforms.uTime, time);
-    gl!.uniform1f(uniforms.uCell, Math.min(Math.max(config.cell, 8), 64) * dpr);
-    gl!.uniform1f(uniforms.uGlyphCount, atlasCount);
-    gl!.uniform1f(uniforms.uAtlasGrid, atlasGrid);
-    gl!.uniform3f(
-      uniforms.uColor,
-      config.color[0],
-      config.color[1],
-      config.color[2],
-    );
-    gl!.uniform3f(
-      uniforms.uHeadColor,
-      config.headColor[0],
-      config.headColor[1],
-      config.headColor[2],
-    );
-    gl!.uniform1f(uniforms.uSpeed, Math.min(Math.max(config.speed, 0.05), 3));
-    gl!.uniform1f(
-      uniforms.uSpeedVar,
-      Math.min(Math.max(config.speedVariance, 0), 1),
-    );
-    gl!.uniform1f(uniforms.uDensity, Math.min(Math.max(config.density, 0), 1));
-    gl!.uniform1f(uniforms.uTrail, Math.min(Math.max(config.trail, 0.2), 3));
-    gl!.uniform1f(uniforms.uGlow, Math.min(Math.max(config.glow, 0), 3));
-    gl!.uniform1f(uniforms.uMutate, Math.min(Math.max(config.mutate, 0), 4));
-    gl!.uniform1f(uniforms.uFlicker, Math.min(Math.max(config.flicker, 0), 1));
-    gl!.uniform1f(
-      uniforms.uLayers,
-      Math.round(Math.min(Math.max(config.layers, 1), 3)),
-    );
-    gl!.uniform1f(uniforms.uDim, Math.min(Math.max(config.dim, 0), 1));
-    gl!.uniform1f(uniforms.uLight, Math.min(Math.max(config.light, 0), 3));
-    gl!.uniform1f(
-      uniforms.uLightRadius,
-      Math.min(Math.max(config.lightRadius, 20), 600) * dpr,
-    );
-    gl!.uniform1f(uniforms.uLightHeight, Math.max(config.lightHeight, 4) * dpr);
-    gl!.uniform1f(uniforms.uRelief, Math.min(Math.max(config.relief, 0), 2));
-    gl!.uniform1f(uniforms.uStir, wakeTouched ? stirAmount() : 0);
-    gl!.uniform1f(uniforms.uScroll, content.scrollTop * dpr);
-    gl!.uniform1f(uniforms.uPageLum, pageLum);
-    gl!.uniform1f(uniforms.uHasContent, htmlInCanvas ? 1 : 0);
-    gl!.bindFramebuffer(gl!.FRAMEBUFFER, null);
-    gl!.viewport(0, 0, output.width, output.height);
-    gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
-  }
+	function render() {
+		uploadContent();
+		gl!.useProgram(program);
+		gl!.activeTexture(gl!.TEXTURE0);
+		gl!.bindTexture(gl!.TEXTURE_2D, contentTexture);
+		gl!.uniform1i(uniforms.uContent, 0);
+		gl!.activeTexture(gl!.TEXTURE1);
+		gl!.bindTexture(gl!.TEXTURE_2D, atlasTexture);
+		gl!.uniform1i(uniforms.uAtlas, 1);
+		gl!.activeTexture(gl!.TEXTURE2);
+		gl!.bindTexture(gl!.TEXTURE_2D, wakeTexture);
+		gl!.uniform1i(uniforms.uWake, 2);
+		gl!.uniform2f(uniforms.uResolution, output.width, output.height);
+		gl!.uniform1f(uniforms.uTime, time);
+		gl!.uniform1f(uniforms.uCell, Math.min(Math.max(config.cell, 8), 64) * dpr);
+		gl!.uniform1f(uniforms.uGlyphCount, atlasCount);
+		gl!.uniform1f(uniforms.uAtlasGrid, atlasGrid);
+		gl!.uniform3f(
+			uniforms.uColor,
+			config.color[0],
+			config.color[1],
+			config.color[2],
+		);
+		gl!.uniform3f(
+			uniforms.uHeadColor,
+			config.headColor[0],
+			config.headColor[1],
+			config.headColor[2],
+		);
+		gl!.uniform1f(uniforms.uSpeed, Math.min(Math.max(config.speed, 0.05), 3));
+		gl!.uniform1f(
+			uniforms.uSpeedVar,
+			Math.min(Math.max(config.speedVariance, 0), 1),
+		);
+		gl!.uniform1f(uniforms.uDensity, Math.min(Math.max(config.density, 0), 1));
+		gl!.uniform1f(uniforms.uTrail, Math.min(Math.max(config.trail, 0.2), 3));
+		gl!.uniform1f(uniforms.uGlow, Math.min(Math.max(config.glow, 0), 3));
+		gl!.uniform1f(uniforms.uMutate, Math.min(Math.max(config.mutate, 0), 4));
+		gl!.uniform1f(uniforms.uFlicker, Math.min(Math.max(config.flicker, 0), 1));
+		gl!.uniform1f(
+			uniforms.uLayers,
+			Math.round(Math.min(Math.max(config.layers, 1), 3)),
+		);
+		gl!.uniform1f(uniforms.uDim, Math.min(Math.max(config.dim, 0), 1));
+		gl!.uniform1f(uniforms.uLight, Math.min(Math.max(config.light, 0), 3));
+		gl!.uniform1f(
+			uniforms.uLightRadius,
+			Math.min(Math.max(config.lightRadius, 20), 600) * dpr,
+		);
+		gl!.uniform1f(uniforms.uLightHeight, Math.max(config.lightHeight, 4) * dpr);
+		gl!.uniform1f(uniforms.uRelief, Math.min(Math.max(config.relief, 0), 2));
+		gl!.uniform1f(uniforms.uStir, wakeTouched ? stirAmount() : 0);
+		gl!.uniform1f(uniforms.uScroll, content.scrollTop * dpr);
+		gl!.uniform1f(uniforms.uPageLum, pageLum);
+		gl!.uniform1f(uniforms.uHasContent, htmlInCanvas ? 1 : 0);
+		gl!.bindFramebuffer(gl!.FRAMEBUFFER, null);
+		gl!.viewport(0, 0, output.width, output.height);
+		gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
+	}
 
-  let raf = 0;
-  let lastTime = performance.now();
-  let destroyed = false;
-  let running = false;
-  let visible = true;
+	let raf = 0;
+	let lastTime = performance.now();
+	let destroyed = false;
+	let running = false;
+	let visible = true;
 
-  const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-  let reducedMotion = motionQuery.matches;
+	const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+	let reducedMotion = motionQuery.matches;
 
-  function frame(now: number) {
-    if (destroyed) return;
-    if (!visible) {
-      running = false;
-      return;
-    }
-    const delta = Math.min((now - lastTime) / 1000, 1 / 30);
-    lastTime = now;
-    if (!reducedMotion) time += delta;
-    stepWake(delta);
-    render();
-    if (reducedMotion && !contentDirty) {
-      running = false;
-      return;
-    }
-    raf = requestAnimationFrame(frame);
-  }
+	function frame(now: number) {
+		if (destroyed) return;
+		if (!visible) {
+			running = false;
+			return;
+		}
+		const delta = Math.min((now - lastTime) / 1000, 1 / 30);
+		lastTime = now;
+		if (!reducedMotion) time += delta;
+		stepWake(delta);
+		render();
+		if (reducedMotion && !contentDirty) {
+			running = false;
+			return;
+		}
+		raf = requestAnimationFrame(frame);
+	}
 
-  function start() {
-    if (destroyed || running || !visible) return;
-    running = true;
-    lastTime = performance.now();
-    raf = requestAnimationFrame(frame);
-  }
+	function start() {
+		if (destroyed || running || !visible) return;
+		running = true;
+		lastTime = performance.now();
+		raf = requestAnimationFrame(frame);
+	}
 
-  wake = start;
-  start();
+	wake = start;
+	start();
 
-  function onMotionChange() {
-    reducedMotion = motionQuery.matches;
-    if (reducedMotion) {
-      tracking = false;
-      wakeCharge.fill(0);
-      for (let i = 0; i < WAKE_RES; i++) wakeField[i * 2 + 1] = 0;
-      wakeLive = true;
-    }
-    start();
-  }
-  motionQuery.addEventListener("change", onMotionChange);
-  content.addEventListener("scroll", start, { passive: true });
+	function onMotionChange() {
+		reducedMotion = motionQuery.matches;
+		if (reducedMotion) {
+			tracking = false;
+			wakeCharge.fill(0);
+			for (let i = 0; i < WAKE_RES; i++) wakeField[i * 2 + 1] = 0;
+			wakeLive = true;
+		}
+		start();
+	}
+	motionQuery.addEventListener("change", onMotionChange);
+	content.addEventListener("scroll", start, { passive: true });
 
-  const pointerHost = output.parentElement ?? output;
+	const pointerHost = output.parentElement ?? output;
 
-  function pointerNorm(event: PointerEvent): number {
-    const box = output.getBoundingClientRect();
-    if (box.width < 1) return -1;
-    return (event.clientX - box.left) / box.width;
-  }
+	function pointerNorm(event: PointerEvent): number {
+		const box = output.getBoundingClientRect();
+		if (box.width < 1) return -1;
+		return (event.clientX - box.left) / box.width;
+	}
 
-  function onPointerMove(event: PointerEvent) {
-    if (reducedMotion) return;
-    const x = pointerNorm(event);
-    if (x < 0) return;
-    pointerX = x;
-    tracking = true;
-    start();
-  }
+	function onPointerMove(event: PointerEvent) {
+		if (reducedMotion) return;
+		const x = pointerNorm(event);
+		if (x < 0) return;
+		pointerX = x;
+		tracking = true;
+		start();
+	}
 
-  function onPointerLeave() {
-    tracking = false;
-  }
+	function onPointerLeave() {
+		tracking = false;
+	}
 
-  function onPointerDown(event: PointerEvent) {
-    if (reducedMotion || stirAmount() <= 0.001) return;
-    const x = pointerNorm(event);
-    if (x < 0) return;
-    pointerX = x;
-    tracking = true;
-    const span = wakeSpan() * 1.8;
-    for (let i = 0; i < WAKE_RES; i++) {
-      const d = Math.abs((i + 0.5) / WAKE_RES - x) / span;
-      if (d >= 1) continue;
-      const t = 1 - d;
-      const burst = t * t * (3 - 2 * t);
-      if (burst > wakeCharge[i]) wakeCharge[i] = burst;
-    }
-    start();
-  }
+	function onPointerDown(event: PointerEvent) {
+		if (reducedMotion || stirAmount() <= 0.001) return;
+		const x = pointerNorm(event);
+		if (x < 0) return;
+		pointerX = x;
+		tracking = true;
+		const span = wakeSpan() * 1.8;
+		for (let i = 0; i < WAKE_RES; i++) {
+			const d = Math.abs((i + 0.5) / WAKE_RES - x) / span;
+			if (d >= 1) continue;
+			const t = 1 - d;
+			const burst = t * t * (3 - 2 * t);
+			if (burst > wakeCharge[i]) wakeCharge[i] = burst;
+		}
+		start();
+	}
 
-  pointerHost.addEventListener("pointermove", onPointerMove, { passive: true });
-  pointerHost.addEventListener("pointerleave", onPointerLeave, { passive: true });
-  pointerHost.addEventListener("pointercancel", onPointerLeave, { passive: true });
-  pointerHost.addEventListener("pointerdown", onPointerDown, { passive: true });
+	pointerHost.addEventListener("pointermove", onPointerMove, { passive: true });
+	pointerHost.addEventListener("pointerleave", onPointerLeave, {
+		passive: true,
+	});
+	pointerHost.addEventListener("pointercancel", onPointerLeave, {
+		passive: true,
+	});
+	pointerHost.addEventListener("pointerdown", onPointerDown, { passive: true });
 
-  const observer = createCanvasResizeObserver(() => {
-    syncCanvasSize();
-    start();
-  });
-  observer.observe(output);
-  observer.observe(content);
+	const observer = createCanvasResizeObserver(() => {
+		syncCanvasSize();
+		start();
+	});
+	observer.observe(output);
+	observer.observe(content);
 
-  const intersection = new IntersectionObserver((entries) => {
-    visible = entries[entries.length - 1]?.isIntersecting ?? true;
-    if (visible) start();
-  });
-  intersection.observe(output);
+	const intersection = new IntersectionObserver((entries) => {
+		visible = entries[entries.length - 1]?.isIntersecting ?? true;
+		if (visible) start();
+	});
+	intersection.observe(output);
 
-  return {
-    setOptions(next) {
-      let changed = false;
-      for (const [key, value] of Object.entries(next)) {
-        const prev = config[key as keyof typeof config];
-        if (Array.isArray(value) && Array.isArray(prev)) {
-          if (
-            value.length !== prev.length ||
-            value.some((item, i) => item !== prev[i])
-          ) {
-            changed = true;
-            break;
-          }
-        } else if (prev !== value) {
-          changed = true;
-          break;
-        }
-      }
-      Object.assign(config, next);
-      if (!changed) return;
-      syncAtlas();
-      syncCanvasSize();
-      start();
-    },
-    resize() {
-      syncCanvasSize();
-      start();
-    },
-    destroy() {
-      destroyed = true;
-      cancelAnimationFrame(raf);
-      observer.disconnect();
-      intersection.disconnect();
-      motionQuery.removeEventListener("change", onMotionChange);
-      content.removeEventListener("scroll", start);
-      pointerHost.removeEventListener("pointermove", onPointerMove);
-      pointerHost.removeEventListener("pointerleave", onPointerLeave);
-      pointerHost.removeEventListener("pointercancel", onPointerLeave);
-      pointerHost.removeEventListener("pointerdown", onPointerDown);
-      gl!.deleteTexture(contentTexture);
-      gl!.deleteTexture(atlasTexture);
-      gl!.deleteTexture(wakeTexture);
-      gl!.deleteProgram(program);
-      gl!.deleteShader(vertexShader);
-      gl!.deleteShader(fragmentShader);
-      gl!.deleteBuffer(quad);
-      if (htmlInCanvas) paintable.onpaint = null;
-    },
-  };
+	return {
+		setOptions(next) {
+			let changed = false;
+			for (const [key, value] of Object.entries(next)) {
+				const prev = config[key as keyof typeof config];
+				if (Array.isArray(value) && Array.isArray(prev)) {
+					if (
+						value.length !== prev.length ||
+						value.some((item, i) => item !== prev[i])
+					) {
+						changed = true;
+						break;
+					}
+				} else if (prev !== value) {
+					changed = true;
+					break;
+				}
+			}
+			Object.assign(config, next);
+			if (!changed) return;
+			syncAtlas();
+			syncCanvasSize();
+			start();
+		},
+		resize() {
+			syncCanvasSize();
+			start();
+		},
+		destroy() {
+			destroyed = true;
+			cancelAnimationFrame(raf);
+			observer.disconnect();
+			intersection.disconnect();
+			motionQuery.removeEventListener("change", onMotionChange);
+			content.removeEventListener("scroll", start);
+			pointerHost.removeEventListener("pointermove", onPointerMove);
+			pointerHost.removeEventListener("pointerleave", onPointerLeave);
+			pointerHost.removeEventListener("pointercancel", onPointerLeave);
+			pointerHost.removeEventListener("pointerdown", onPointerDown);
+			gl!.deleteTexture(contentTexture);
+			gl!.deleteTexture(atlasTexture);
+			gl!.deleteTexture(wakeTexture);
+			gl!.deleteProgram(program);
+			gl!.deleteShader(vertexShader);
+			gl!.deleteShader(fragmentShader);
+			gl!.deleteBuffer(quad);
+			if (htmlInCanvas) paintable.onpaint = null;
+		},
+	};
 }
 
 export interface GlyphRainProps extends GlyphRainOptions {
-  children: ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
+	children: ReactNode;
+	className?: string;
+	style?: React.CSSProperties;
 }
 
 const emptySubscribe = () => () => {};
 
 export function GlyphRain({
-  children,
-  className,
-  style,
-  ...options
+	children,
+	className,
+	style,
+	...options
 }: GlyphRainProps) {
-  const sourceRef = useRef<HTMLCanvasElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const outputRef = useRef<HTMLCanvasElement>(null);
-  const instanceRef = useRef<GlyphRainInstance | null>(null);
-  const [initialOptions] = useState(options);
-  const [failed, setFailed] = useState(false);
+	const sourceRef = useRef<HTMLCanvasElement>(null);
+	const contentRef = useRef<HTMLDivElement>(null);
+	const outputRef = useRef<HTMLCanvasElement>(null);
+	const instanceRef = useRef<GlyphRainInstance | null>(null);
+	const [initialOptions] = useState(options);
+	const [failed, setFailed] = useState(false);
 
-  const supported = useSyncExternalStore(
-    emptySubscribe,
-    supportsHtmlInCanvas,
-    () => false,
-  );
-  const native = supported && !failed;
+	const supported = useSyncExternalStore(
+		emptySubscribe,
+		supportsHtmlInCanvas,
+		() => false,
+	);
+	const native = supported && !failed;
 
-  useEffect(() => {
-    const source = sourceRef.current;
-    const content = contentRef.current;
-    const output = outputRef.current;
-    if (!source || !content || !output) return;
-    instanceRef.current = createGlyphRain(
-      { source, content, output },
-      initialOptions,
-    );
-    if (native && !instanceRef.current) setFailed(true);
-    return () => {
-      instanceRef.current?.destroy();
-      instanceRef.current = null;
-    };
-  }, [initialOptions, native]);
+	useEffect(() => {
+		const source = sourceRef.current;
+		const content = contentRef.current;
+		const output = outputRef.current;
+		if (!source || !content || !output) return;
+		instanceRef.current = createGlyphRain(
+			{ source, content, output },
+			initialOptions,
+		);
+		if (native && !instanceRef.current) setFailed(true);
+		return () => {
+			instanceRef.current?.destroy();
+			instanceRef.current = null;
+		};
+	}, [initialOptions, native]);
 
-  useEffect(() => {
-    instanceRef.current?.setOptions(options);
-  });
+	useEffect(() => {
+		instanceRef.current?.setOptions(options);
+	});
 
-  return (
-    <div className={className} style={{ position: "relative", ...style }}>
-      <canvas
-        ref={sourceRef}
-        // @ts-expect-error experimental html-in-canvas attribute
-        layoutsubtree="true"
-        suppressHydrationWarning
-        style={
-          native
-            ? { position: "absolute", inset: 0, width: "100%", height: "100%" }
-            : { display: "none" }
-        }
-      >
-        {native ? (
-          <div
-            ref={contentRef}
-            style={{
-              position: "relative",
-              width: "100%",
-              height: "100%",
-              overflow: "auto",
-            }}
-          >
-            {children}
-          </div>
-        ) : null}
-      </canvas>
-      {!native ? (
-        <div
-          ref={contentRef}
-          style={{
-            position: "relative",
-            width: "100%",
-            height: "100%",
-            overflow: "auto",
-          }}
-        >
-          {children}
-        </div>
-      ) : null}
-      <canvas
-        ref={outputRef}
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          pointerEvents: "none",
-        }}
-      />
-    </div>
-  );
+	return (
+		<div className={className} style={{ position: "relative", ...style }}>
+			<canvas
+				ref={sourceRef}
+				// @ts-expect-error experimental html-in-canvas attribute
+				layoutsubtree="true"
+				suppressHydrationWarning
+				style={
+					native
+						? { position: "absolute", inset: 0, width: "100%", height: "100%" }
+						: { display: "none" }
+				}
+			>
+				{native ? (
+					<div
+						ref={contentRef}
+						style={{
+							position: "relative",
+							width: "100%",
+							height: "100%",
+							overflow: "auto",
+						}}
+					>
+						{children}
+					</div>
+				) : null}
+			</canvas>
+			{!native ? (
+				<div
+					ref={contentRef}
+					style={{
+						position: "relative",
+						width: "100%",
+						height: "100%",
+						overflow: "auto",
+					}}
+				>
+					{children}
+				</div>
+			) : null}
+			<canvas
+				ref={outputRef}
+				aria-hidden
+				style={{
+					position: "absolute",
+					inset: 0,
+					width: "100%",
+					height: "100%",
+					pointerEvents: "none",
+				}}
+			/>
+		</div>
+	);
 }
-
 
 export default GlyphRain;
