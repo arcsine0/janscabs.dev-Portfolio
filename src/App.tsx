@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { ArrowUpRight, Github, Mail, Terminal } from "lucide-react";
-import { Grid } from "./components/canvasui/Grid";
+// import { Grid } from "./components/canvasui/Grid";
 import TerminalLoader from "./components/TerminalLoader";
 import VHS from "./components/canvasui/VHS";
 
@@ -32,7 +32,7 @@ function App() {
 
 	return (
 		<div className="site-shell">
-			<Grid
+			{/* <Grid
 				className="ambient-grid"
 				globalPointer
 				tileSize={160}
@@ -54,7 +54,7 @@ function App() {
 				tint={[0, 1, 0.4039]}
 			>
 				<div className="ambient-grid-surface" aria-hidden="true" />
-			</Grid>
+			</Grid> */}
 			<div className="crt-bezel">
 				<div className="crt-housing">
 					{/* <svg
