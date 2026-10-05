@@ -9,12 +9,18 @@ const projects = [
 	["02", "Cryptodw", "A clean crypto dashboard."],
 	["03", "Kaquizz", "A playful learning platform."],
 ];
-type Page = "home" | "archive";
+type Page = "home" | "projects" | "about";
 
-let archiveCached = false;
-const Archive = lazy(async () => {
-	const module = await import("./pages/Archive");
-	archiveCached = true;
+let aboutCached = false;
+let projectsCached = false;
+const Projects = lazy(async () => {
+	const module = await import("./pages/Projects");
+	projectsCached = true;
+	return module;
+});
+const About = lazy(async () => {
+	const module = await import("./pages/About");
+	aboutCached = true;
 	return module;
 });
 
@@ -24,7 +30,11 @@ function App() {
 	const navigate = (next: Page) => {
 		if (next !== page) {
 			setPage(next);
-			if (next === "home" || archiveCached) {
+			if (
+				next === "home" ||
+				(next === "projects" && projectsCached) ||
+				(next === "about" && aboutCached)
+			) {
 				setFlash((value) => value + 1);
 			}
 		}
@@ -101,9 +111,17 @@ function App() {
 											</button>
 											<button
 												className="link link-hover"
-												onClick={() => navigate("archive")}
+												onClick={() => navigate("about")}
 											>
-												[ARCHIVE]
+												<span className="sm:hidden">[BIO]</span>
+												<span className="hidden sm:inline">[PERSONNEL]</span>
+											</button>
+											<button
+												className="link link-hover"
+												onClick={() => navigate("projects")}
+											>
+												<span className="sm:hidden">[WORK]</span>
+												<span className="hidden sm:inline">[PROJECTS]</span>
 											</button>
 											<a
 												className="link link-hover"
@@ -209,8 +227,10 @@ function App() {
 												</p>
 											</section>
 										</main>
+									) : page === "projects" ? (
+										<Projects onReturnHome={() => navigate("home")} />
 									) : (
-										<Archive onReturnHome={() => navigate("home")} />
+										<About onReturnHome={() => navigate("home")} />
 									)}
 									<footer
 										id="contact"
