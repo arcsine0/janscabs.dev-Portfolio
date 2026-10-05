@@ -182,6 +182,164 @@ body {
 		linear-gradient(90deg, rgb(89 255 139 / 0.035) 1px, transparent 1px);
 	background-size: 24px 24px;
 }
+.assistant-stage {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	height: 0;
+	pointer-events: none;
+}
+.assistant-engine {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	height: 100dvh;
+	place-items: center;
+	transform-origin: center;
+	transition:
+		transform 480ms ease,
+		opacity 480ms ease;
+}
+.assistant-engine--background {
+	transform: scale(0.75);
+	opacity: 0.2;
+}
+.assistant-float {
+	animation: assistant-float 4.5s ease-in-out infinite;
+	text-align: center;
+}
+.assistant-face {
+	margin: 0;
+	color: oklch(0.88 0.12 145);
+	font-family: "Space Mono", ui-monospace, monospace;
+	font-size: clamp(2.25rem, 7vw, 7.5rem);
+	letter-spacing: 0.035em;
+	line-height: 1;
+	white-space: nowrap;
+	text-shadow: 0 0 16px rgb(71 255 125 / 0.4);
+}
+.assistant-subtitle {
+	margin: 1.75rem 0 0;
+	min-height: 1.4em;
+	color: rgb(180 255 204 / 0.82);
+	font-size: clamp(0.75rem, 1.5vw, 0.95rem);
+	letter-spacing: 0.06em;
+	opacity: 0;
+	text-shadow: 0 0 8px rgb(71 255 125 / 0.26);
+	transition: opacity 160ms ease;
+}
+.assistant-subtitle--visible {
+	opacity: 1;
+}
+.assistant-mouth {
+	display: inline-grid;
+	width: 1.25em;
+	height: 1em;
+	place-items: center;
+	vertical-align: middle;
+	line-height: 1;
+	animation: assistant-mouth-change 150ms ease-out;
+}
+.assistant-toast {
+	position: absolute;
+	top: calc(100dvh - 9rem);
+	right: 1rem;
+	bottom: auto;
+	left: auto;
+	z-index: 20;
+	width: min(36rem, calc(100vw - 2rem));
+	padding: 0;
+}
+.assistant-toast .alert {
+	border-color: rgb(109 255 150 / 0.62);
+	border-radius: 0;
+	background: rgb(5 25 14 / 0.92);
+	color: oklch(0.88 0.12 145);
+	font-family: "Space Mono", ui-monospace, monospace;
+	font-size: 0.9rem;
+	line-height: 1.45;
+	box-shadow: 0 0 16px rgb(71 255 125 / 0.18);
+}
+@keyframes assistant-float {
+	0%,
+	100% {
+		transform: translateY(-8px);
+	}
+	50% {
+		transform: translateY(8px);
+	}
+}
+@keyframes assistant-mouth-change {
+	0% {
+		transform: scale(0.72);
+		opacity: 0.35;
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.assistant-engine {
+		transition: none;
+	}
+	.assistant-float {
+		animation: none;
+	}
+}
+.home-hero-snap {
+	scroll-behavior: smooth;
+	scroll-snap-type: y mandatory;
+}
+.home-hero,
+#home-content {
+	scroll-snap-align: start;
+	scroll-snap-stop: always;
+}
+.home-nav-slot,
+.page-nav-slot {
+	position: sticky;
+	top: 0;
+	z-index: 15;
+}
+.home-nav-slot {
+	height: 0;
+}
+.terminal-nav {
+	transition:
+		transform 180ms ease,
+		opacity 180ms ease;
+}
+.home-nav-slot .terminal-nav {
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
+	transform: translateY(-110%);
+	opacity: 0;
+	pointer-events: none;
+}
+.home-nav-slot .terminal-nav--visible {
+	transform: translateY(0);
+	opacity: 1;
+	pointer-events: auto;
+}
+.home-hero-scroll {
+	display: grid;
+	place-items: center;
+	border: 0;
+	background: transparent;
+	color: rgb(156 255 184 / 0.78);
+	cursor: pointer;
+	filter: drop-shadow(0 0 6px rgb(71 255 125 / 0.26));
+	transition:
+		transform 160ms ease,
+		color 160ms ease;
+}
+.home-hero-scroll:hover {
+	transform: translateY(4px);
+	color: oklch(0.88 0.12 145);
+}
 .terminal-panel {
 	position: relative;
 	border-color: rgb(109 255 150 / 0.72);
@@ -281,12 +439,47 @@ body {
 }
 .terminal-loader {
 	display: grid;
-	min-height: 100%;
+	min-height: 100dvh;
+	position: relative;
+	overflow: hidden;
 	place-items: center;
-	background: #061109;
+	border: 1px solid rgb(117 255 162 / 0.68);
+	background-color: #061109;
+	background-image:
+		linear-gradient(rgb(89 255 139 / 0.045) 1px, transparent 1px),
+		linear-gradient(90deg, rgb(89 255 139 / 0.035) 1px, transparent 1px);
+	background-size: 24px 24px;
+	box-shadow:
+		inset 22px 0 28px rgb(50 255 108 / 0.12),
+		inset -22px 0 28px rgb(50 255 108 / 0.12),
+		0 0 10px rgb(71 255 125 / 0.28);
+}
+.terminal-loader::before {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	content: "";
+	background: linear-gradient(
+		90deg,
+		rgb(77 255 126 / 0.13),
+		transparent 8%,
+		transparent 92%,
+		rgb(77 255 126 / 0.13)
+	);
+}
+.terminal-loader--boot {
+	position: fixed;
+	inset: 0;
+	z-index: 60;
+}
+.terminal-loader--fading {
+	pointer-events: none;
+	animation: terminal-loader-out 320ms ease forwards;
 }
 .terminal-loader-content {
 	display: grid;
+	position: relative;
+	z-index: 1;
 	width: min(42rem, 82vw);
 	justify-items: center;
 	gap: 0.8rem;
@@ -329,6 +522,12 @@ body {
 	}
 	100% {
 		background: transparent;
+		opacity: 0;
+	}
+}
+
+@keyframes terminal-loader-out {
+	to {
 		opacity: 0;
 	}
 }

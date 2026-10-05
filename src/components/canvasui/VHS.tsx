@@ -6,6 +6,7 @@ import {
 	useState,
 	useSyncExternalStore,
 	type ReactNode,
+	type UIEventHandler,
 } from "react";
 
 const canvasDimensionLimits = new WeakMap<
@@ -682,12 +683,21 @@ export function createVHS(
 export interface VHSProps extends VHSOptions {
 	children: ReactNode;
 	className?: string;
+	contentClassName?: string;
+	onScroll?: UIEventHandler<HTMLDivElement>;
 	style?: React.CSSProperties;
 }
 
 const emptySubscribe = () => () => {};
 
-export function VHS({ children, className, style, ...options }: VHSProps) {
+export function VHS({
+	children,
+	className,
+	contentClassName,
+	onScroll,
+	style,
+	...options
+}: VHSProps) {
 	const sourceRef = useRef<HTMLCanvasElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
 	const outputRef = useRef<HTMLCanvasElement>(null);
@@ -738,6 +748,8 @@ export function VHS({ children, className, style, ...options }: VHSProps) {
 				{native ? (
 					<div
 						ref={contentRef}
+						className={contentClassName}
+						onScroll={onScroll}
 						style={{
 							position: "relative",
 							width: "100%",
@@ -752,6 +764,8 @@ export function VHS({ children, className, style, ...options }: VHSProps) {
 			{!native ? (
 				<div
 					ref={contentRef}
+					className={contentClassName}
+					onScroll={onScroll}
 					style={{
 						position: "relative",
 						width: "100%",
