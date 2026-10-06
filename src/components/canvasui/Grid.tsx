@@ -882,8 +882,8 @@ export function createGrid(
 
 	const rectCache = createRectCache(output);
 
-	function onPointerMove(event: PointerEvent) {
-		if (reducedMotion) return;
+	function onPointerMove(event: Event) {
+		if (!(event instanceof PointerEvent) || reducedMotion) return;
 		const rect = rectCache.current;
 		const aspect = Math.max(rect.width, 1) / Math.max(rect.height, 1);
 		const fx = (event.clientX - rect.left) / Math.max(rect.width, 1);
