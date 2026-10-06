@@ -115,6 +115,12 @@ function App() {
 							page === "home" && !pastHero ? "home-hero-snap" : undefined
 						}
 						contentId="crt-scroll"
+						contentStyle={{
+							width: "100vw",
+							minWidth: "100vw",
+							height: "100dvh",
+							minHeight: "100dvh",
+						}}
 						onScroll={handleScreenScroll}
 					>
 						<Suspense fallback={<TerminalLoader />}>
