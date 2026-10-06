@@ -51,6 +51,12 @@ function App() {
 			?.scrollIntoView({ behavior: "smooth", block: "start" });
 	};
 	const navigate = (next: Page) => {
+		if (next === "home") {
+			setPastHero(false);
+			requestAnimationFrame(() => {
+				document.getElementById("crt-scroll")?.scrollTo({ top: 0 });
+			});
+		}
 		if (next !== page) {
 			setPage(next);
 			if (
@@ -108,12 +114,13 @@ function App() {
 						contentClassName={
 							page === "home" && !pastHero ? "home-hero-snap" : undefined
 						}
+						contentId="crt-scroll"
 						onScroll={handleScreenScroll}
 					>
 						<Suspense fallback={<TerminalLoader />}>
 							<div className="terminal-app">
 								<div className="assistant-stage">
-									<Poco isBackground={page !== "home" || pastHero} />
+									<Poco page={page} pastHero={pastHero} />
 								</div>
 								<div className="mx-auto min-h-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
 									<div

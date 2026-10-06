@@ -204,9 +204,21 @@ body {
 	transform: scale(0.75);
 	opacity: 0.2;
 }
+.assistant-engine--interactive {
+	pointer-events: none;
+}
 .assistant-float {
 	animation: assistant-float 4.5s ease-in-out infinite;
 	text-align: center;
+}
+.assistant-presence {
+	transform: translate(var(--poco-follow-x), var(--poco-follow-y));
+}
+.assistant-presence--eye {
+	animation: assistant-eye-push 1100ms cubic-bezier(0.16, 0.84, 0.24, 1);
+}
+.assistant-presence--cheek {
+	animation: assistant-cheek-push 1100ms cubic-bezier(0.16, 0.84, 0.24, 1);
 }
 .assistant-face {
 	margin: 0;
@@ -240,6 +252,23 @@ body {
 	line-height: 1;
 	animation: assistant-mouth-change 150ms ease-out;
 }
+.assistant-eye {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: inherit;
+	cursor: pointer;
+}
+.assistant-engine--interactive .assistant-eye {
+	pointer-events: auto;
+}
+.assistant-eye:focus-visible {
+	outline: 1px solid currentColor;
+	outline-offset: 0.12em;
+}
 .assistant-toast {
 	position: absolute;
 	top: calc(100dvh - 9rem);
@@ -260,6 +289,21 @@ body {
 	line-height: 1.45;
 	box-shadow: 0 0 16px rgb(71 255 125 / 0.18);
 }
+.assistant-toast-avatar {
+	align-self: center;
+}
+.assistant-toast-avatar > div {
+	display: flex !important;
+	width: 3rem;
+	height: 3rem;
+	align-items: center;
+	justify-content: center;
+}
+.assistant-toast-avatar span {
+	display: block;
+	line-height: 1;
+	transform: translateY(-0.08em);
+}
 @keyframes assistant-float {
 	0%,
 	100% {
@@ -277,6 +321,35 @@ body {
 	100% {
 		transform: scale(1);
 		opacity: 1;
+	}
+}
+@keyframes assistant-eye-push {
+	0%,
+	100% {
+		transform: translate(var(--poco-follow-x), var(--poco-follow-y)) scale(1);
+	}
+	24% {
+		transform: translate(var(--poco-follow-x), var(--poco-follow-y)) scale(0.92);
+	}
+	58% {
+		transform: translate(var(--poco-follow-x), var(--poco-follow-y))
+			scale(1.018);
+	}
+	78% {
+		transform: translate(var(--poco-follow-x), var(--poco-follow-y))
+			scale(0.994);
+	}
+}
+@keyframes assistant-cheek-push {
+	0%,
+	100% {
+		transform: translate(var(--poco-follow-x), var(--poco-follow-y));
+	}
+	28% {
+		transform: translate(
+			calc(var(--poco-follow-x) + var(--poco-recoil-x)),
+			calc(var(--poco-follow-y) + var(--poco-recoil-y))
+		);
 	}
 }
 @media (prefers-reduced-motion: reduce) {

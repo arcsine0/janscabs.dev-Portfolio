@@ -684,6 +684,7 @@ export interface VHSProps extends VHSOptions {
 	children: ReactNode;
 	className?: string;
 	contentClassName?: string;
+	contentId?: string;
 	onScroll?: UIEventHandler<HTMLDivElement>;
 	style?: React.CSSProperties;
 }
@@ -694,6 +695,7 @@ export function VHS({
 	children,
 	className,
 	contentClassName,
+	contentId,
 	onScroll,
 	style,
 	...options
@@ -748,6 +750,7 @@ export function VHS({
 				{native ? (
 					<div
 						ref={contentRef}
+						id={contentId}
 						className={contentClassName}
 						onScroll={onScroll}
 						style={{
@@ -764,6 +767,7 @@ export function VHS({
 			{!native ? (
 				<div
 					ref={contentRef}
+					id={contentId}
 					className={contentClassName}
 					onScroll={onScroll}
 					style={{
