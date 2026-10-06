@@ -370,6 +370,7 @@ export function createVHS(
 	elements: VHSElements,
 	options: VHSOptions = {},
 	onCaptureError?: () => void,
+	enableHtmlInCanvas = true,
 ): VHSInstance | null {
 	const config = { ...DEFAULTS, ...options };
 	const { source, content, output } = elements;
@@ -385,7 +386,7 @@ export function createVHS(
 
 	const sourceCtx = source.getContext("2d") as ElementImageContext | null;
 	const paintable = source as PaintableCanvas;
-	const htmlInCanvas = Boolean(
+	const htmlInCanvas = enableHtmlInCanvas && Boolean(
 		sourceCtx &&
 			typeof sourceCtx.drawElementImage === "function" &&
 			typeof paintable.requestPaint === "function",
@@ -465,6 +466,8 @@ export function createVHS(
 	);
 
 	let contentMaxX = 1;
+	let paintReady = false;
+	let initialPaintFrame = 0;
 
 	let bezel: [number, number, number] = [0, 0, 0];
 	const bezelProbe = document.createElement("canvas");
@@ -510,12 +513,18 @@ export function createVHS(
 				source.width = sourceWidth;
 				source.height = sourceHeight;
 			}
-			paintable.requestPaint!();
+			if (paintReady) paintable.requestPaint!();
 		}
 	}
 
 	syncCanvasSize();
 	syncBezelColor();
+	if (htmlInCanvas) {
+		initialPaintFrame = requestAnimationFrame(() => {
+			paintReady = true;
+			paintable.requestPaint!();
+		});
+	}
 
 	function uploadContent() {
 		if (!htmlInCanvas || !contentDirty) return;
@@ -667,6 +676,7 @@ export function createVHS(
 		},
 		destroy() {
 			destroyed = true;
+			cancelAnimationFrame(initialPaintFrame);
 			cancelAnimationFrame(raf);
 			observer.disconnect();
 			intersection.disconnect();
@@ -727,6 +737,7 @@ export function VHS({
 			{ source, content, output },
 			initialOptions,
 			() => setFailed(true),
+			native,
 		);
 		if (native && !instanceRef.current) setFailed(true);
 		return () => {
