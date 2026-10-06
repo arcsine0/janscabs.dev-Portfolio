@@ -92,14 +92,9 @@ type HtmlInCanvasElement = HTMLCanvasElement & {
 	) => void;
 };
 
-/** Configure the capture subtree for both generations of the experimental API. */
-function prepareHtmlInCanvas(source: HTMLCanvasElement, content: HTMLElement) {
-	if ("content" in source) {
-		source.setAttribute("content", "drawable");
-		content.setAttribute("drawable", "");
-	} else {
-		source.setAttribute("layoutsubtree", "");
-	}
+function supportsDrawableContent(): boolean {
+	if (typeof document === "undefined") return false;
+	return "content" in document.createElement("canvas");
 }
 
 /** Capture pixels and keep the native DOM hit-test region aligned with them. */
@@ -374,6 +369,7 @@ export function supportsHtmlInCanvas(): boolean {
 export function createVHS(
 	elements: VHSElements,
 	options: VHSOptions = {},
+	onCaptureError?: () => void,
 ): VHSInstance | null {
 	const config = { ...DEFAULTS, ...options };
 	const { source, content, output } = elements;
@@ -395,10 +391,9 @@ export function createVHS(
 			typeof paintable.requestPaint === "function",
 	);
 
-	if (htmlInCanvas) prepareHtmlInCanvas(source, content);
-
 	let contentDirty = false;
 	let wake = () => {};
+	let captureFailed = false;
 
 	if (htmlInCanvas) {
 		paintable.onpaint = () => {
@@ -407,7 +402,13 @@ export function createVHS(
 				drawHtmlInCanvas(source, sourceCtx!, content);
 				contentDirty = true;
 				wake();
-			} catch {}
+			} catch (error) {
+				if (captureFailed) return;
+				captureFailed = true;
+				paintable.onpaint = null;
+				console.warn("HTML-in-Canvas capture failed; using the DOM fallback.", error);
+				onCaptureError?.();
+			}
 		};
 	}
 
@@ -715,6 +716,7 @@ export function VHS({
 		() => false,
 	);
 	const native = supported && !failed;
+	const drawableContent = native && supportsDrawableContent();
 
 	useEffect(() => {
 		const source = sourceRef.current;
@@ -724,6 +726,7 @@ export function VHS({
 		instanceRef.current = createVHS(
 			{ source, content, output },
 			initialOptions,
+			() => setFailed(true),
 		);
 		if (native && !instanceRef.current) setFailed(true);
 		return () => {
@@ -740,8 +743,9 @@ export function VHS({
 		<div className={className} style={{ position: "relative", ...style }}>
 			<canvas
 				ref={sourceRef}
-				// @ts-expect-error experimental html-in-canvas attribute
-				layoutsubtree="true"
+				{...(drawableContent
+					? ({ content: "drawable" } as React.CanvasHTMLAttributes<HTMLCanvasElement>)
+					: ({ layoutsubtree: "true" } as React.CanvasHTMLAttributes<HTMLCanvasElement>))}
 				suppressHydrationWarning
 				style={
 					native
@@ -752,6 +756,9 @@ export function VHS({
 				{native ? (
 					<div
 						ref={contentRef}
+						{...(drawableContent
+							? ({ drawable: "" } as React.HTMLAttributes<HTMLDivElement>)
+							: {})}
 						id={contentId}
 						className={contentClassName}
 						onScroll={onScroll}
