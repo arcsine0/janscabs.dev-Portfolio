@@ -26,21 +26,6 @@ const modeLabels: Record<CanvasProbeV2Mode, string> = {
 	interactions: "complete composition + live controls",
 };
 
-function DialogueToast() {
-	return (
-		<div className="toast toast-end toast-bottom assistant-toast" aria-live="polite">
-			<div role="alert" className="alert alert-outline">
-				<div className="avatar avatar-placeholder assistant-toast-avatar">
-					<div className="bg-primary font-mono text-base text-primary-content">
-						<span>⦿ᵕ</span>
-					</div>
-				</div>
-				<span>Diagnostic dialogue relay online.</span>
-			</div>
-		</div>
-	);
-}
-
 function ProbeNav({
 	visible,
 	interactive,
@@ -94,7 +79,6 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 	const hasNav = mode !== "base";
 	const hasPoco = mode === "poco" || mode === "toast" || complete;
 	const hasHero = hasPoco;
-	const hasToast = (mode === "toast" || complete) && pastHero;
 
 	const handleScroll = (event: UIEvent<HTMLDivElement>) => {
 		if (!hasHero) return;
@@ -135,7 +119,6 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 						{hasPoco && (
 							<div className="assistant-stage">
 								<Poco page="home" pastHero={pastHero} />
-								{hasToast && <DialogueToast />}
 							</div>
 						)}
 						<div className="relative min-h-full">

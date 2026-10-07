@@ -78,7 +78,7 @@ function App() {
 						<div className="terminal-app">
 							<div className="assistant-stage">
 								<Poco
-									enableClickInteractions={false}
+									enableDialogueToast={false}
 									page={page}
 									pastHero={pastHero}
 								/>

@@ -117,10 +117,12 @@ function Poco({
 	page,
 	pastHero,
 	enableClickInteractions = true,
+	enableDialogueToast = true,
 }: {
 	page: Page;
 	pastHero: boolean;
 	enableClickInteractions?: boolean;
+	enableDialogueToast?: boolean;
 }) {
 	const [gaze, setGaze] = useState<Gaze>("center");
 	const [activeLine, setActiveLine] = useState("");
@@ -377,7 +379,7 @@ function Poco({
 					</div>
 				</div>
 			</div>
-			{isBackground && isTalking && activeLine && (
+			{enableDialogueToast && isBackground && isTalking && activeLine && (
 				<div
 					className="toast toast-end toast-bottom assistant-toast"
 					aria-live="polite"
