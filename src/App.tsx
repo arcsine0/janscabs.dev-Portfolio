@@ -10,6 +10,7 @@ import {
 import Poco from "./components/TerminalAssistant";
 import TerminalLoader from "./components/TerminalLoader";
 import VHS from "./components/canvasui/VHS";
+import CanvasProbe from "./pages/CanvasProbe";
 
 const projects = [
 	["01", "SmartTicket", "A considered ticketing experience."],
@@ -35,6 +36,7 @@ function App() {
 	const [page, setPage] = useState<Page>("home");
 	const [flash, setFlash] = useState(0);
 	const [pastHero, setPastHero] = useState(false);
+	if (window.location.hash === "#canvas-probe") return <CanvasProbe />;
 	const handleScreenScroll = (event: UIEvent<HTMLDivElement>) => {
 		if (page !== "home") return;
 		const hero =

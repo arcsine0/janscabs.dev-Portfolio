@@ -798,6 +798,7 @@ export function VHS({
 				ref={outputRef}
 				aria-hidden
 				style={{
+					display: native ? undefined : "none",
 					position: "absolute",
 					inset: 0,
 					width: "100%",
