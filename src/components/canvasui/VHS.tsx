@@ -92,9 +92,14 @@ type HtmlInCanvasElement = HTMLCanvasElement & {
 	) => void;
 };
 
-function supportsDrawableContent(): boolean {
-	if (typeof document === "undefined") return false;
-	return "content" in document.createElement("canvas");
+/** Configure the capture subtree for both generations of the experimental API. */
+function prepareHtmlInCanvas(source: HTMLCanvasElement, content: HTMLElement) {
+	if ("content" in source) {
+		source.setAttribute("content", "drawable");
+		content.setAttribute("drawable", "");
+	} else {
+		source.setAttribute("layoutsubtree", "");
+	}
 }
 
 /** Capture pixels and keep the native DOM hit-test region aligned with them. */
@@ -391,12 +396,11 @@ export function createVHS(
 			typeof sourceCtx.drawElementImage === "function" &&
 			typeof paintable.requestPaint === "function",
 	);
+	if (htmlInCanvas) prepareHtmlInCanvas(source, content);
 
 	let contentDirty = false;
 	let wake = () => {};
 	let captureFailed = false;
-	let missingPaintRetries = 0;
-	let paintFrame = 0;
 
 	if (htmlInCanvas) {
 		paintable.onpaint = () => {
@@ -406,14 +410,6 @@ export function createVHS(
 				contentDirty = true;
 				wake();
 			} catch (error) {
-				const missingPaintRecord =
-					error instanceof DOMException &&
-					error.message.includes("No cached paint record");
-				if (missingPaintRecord && missingPaintRetries < 3) {
-					missingPaintRetries += 1;
-					paintFrame = requestAnimationFrame(() => paintable.requestPaint?.());
-					return;
-				}
 				if (captureFailed) return;
 				captureFailed = true;
 				paintable.onpaint = null;
@@ -476,7 +472,6 @@ export function createVHS(
 	);
 
 	let contentMaxX = 1;
-	let paintReady = false;
 
 	let bezel: [number, number, number] = [0, 0, 0];
 	const bezelProbe = document.createElement("canvas");
@@ -522,18 +517,12 @@ export function createVHS(
 				source.width = sourceWidth;
 				source.height = sourceHeight;
 			}
-			if (paintReady) paintable.requestPaint!();
+			paintable.requestPaint!();
 		}
 	}
 
 	syncCanvasSize();
 	syncBezelColor();
-	if (htmlInCanvas) {
-		paintFrame = requestAnimationFrame(() => {
-			paintReady = true;
-			paintable.requestPaint!();
-		});
-	}
 
 	function uploadContent() {
 		if (!htmlInCanvas || !contentDirty) return;
@@ -685,7 +674,6 @@ export function createVHS(
 		},
 		destroy() {
 			destroyed = true;
-			cancelAnimationFrame(paintFrame);
 			cancelAnimationFrame(raf);
 			observer.disconnect();
 			intersection.disconnect();
@@ -735,7 +723,6 @@ export function VHS({
 		() => false,
 	);
 	const native = supported && !failed;
-	const drawableContent = native && supportsDrawableContent();
 
 	useEffect(() => {
 		const source = sourceRef.current;
@@ -763,9 +750,8 @@ export function VHS({
 		<div className={className} style={{ position: "relative", ...style }}>
 			<canvas
 				ref={sourceRef}
-				{...(drawableContent
-					? ({ content: "drawable" } as React.CanvasHTMLAttributes<HTMLCanvasElement>)
-					: ({ layoutsubtree: "true" } as React.CanvasHTMLAttributes<HTMLCanvasElement>))}
+				// @ts-expect-error experimental html-in-canvas attribute
+				layoutsubtree="true"
 				suppressHydrationWarning
 				style={
 					native
@@ -776,9 +762,6 @@ export function VHS({
 				{native ? (
 					<div
 						ref={contentRef}
-						{...(drawableContent
-							? ({ drawable: "" } as React.HTMLAttributes<HTMLDivElement>)
-							: {})}
 						id={contentId}
 						className={contentClassName}
 						onScroll={onScroll}
