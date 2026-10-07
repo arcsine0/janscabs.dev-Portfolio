@@ -113,7 +113,15 @@ function choose(group: LineGroup) {
 	return choices[Math.floor(Math.random() * choices.length)];
 }
 
-function Poco({ page, pastHero }: { page: Page; pastHero: boolean }) {
+function Poco({
+	page,
+	pastHero,
+	enableClickInteractions = true,
+}: {
+	page: Page;
+	pastHero: boolean;
+	enableClickInteractions?: boolean;
+}) {
 	const [gaze, setGaze] = useState<Gaze>("center");
 	const [activeLine, setActiveLine] = useState("");
 	const [isTalking, setIsTalking] = useState(false);
@@ -132,6 +140,7 @@ function Poco({ page, pastHero }: { page: Page; pastHero: boolean }) {
 	const previous = useRef<{ page: Page; pastHero: boolean } | null>(null);
 	const isBackground = page !== "home" || pastHero;
 	const canInteract = page === "home" && !pastHero;
+	const canClick = canInteract && enableClickInteractions;
 
 	const speak = useCallback((group: LineGroup, priority = false) => {
 		if (!priority && Date.now() < priorityUntil.current) return;
@@ -271,7 +280,7 @@ function Poco({ page, pastHero }: { page: Page; pastHero: boolean }) {
 	}, [isTalking]);
 
 	const interactWithEye = (side: "left" | "right") => {
-		if (!canInteract) return;
+		if (!canClick) return;
 		setClickedEye(side);
 		setReaction("eye");
 		speak("eyeClick", true);
@@ -280,7 +289,7 @@ function Poco({ page, pastHero }: { page: Page; pastHero: boolean }) {
 		endReaction.current = window.setTimeout(() => setReaction(null), 1160);
 	};
 	const interactWithCheek = (event: MouseEvent<HTMLButtonElement>) => {
-		if (!canInteract) return;
+		if (!canClick) return;
 		const x = event.clientX - window.innerWidth / 2;
 		const y = event.clientY - window.innerHeight / 2;
 		const distance = Math.max(1, Math.hypot(x, y));
@@ -313,7 +322,7 @@ function Poco({ page, pastHero }: { page: Page; pastHero: boolean }) {
 		<>
 			<div
 				className={`assistant-engine ${isBackground ? "assistant-engine--background" : ""} ${
-					canInteract ? "assistant-engine--interactive" : ""
+					canClick ? "assistant-engine--interactive" : ""
 				}`}
 			>
 				<div className="assistant-float">

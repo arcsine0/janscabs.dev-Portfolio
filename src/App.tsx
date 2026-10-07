@@ -77,7 +77,11 @@ function App() {
 					>
 						<div className="terminal-app">
 							<div className="assistant-stage">
-								<Poco page={page} pastHero={pastHero} />
+								<Poco
+									enableClickInteractions={false}
+									page={page}
+									pastHero={pastHero}
+								/>
 							</div>
 							<div className="mx-auto min-h-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
 								<div className={page === "home" ? "home-nav-slot" : "page-nav-slot"}>

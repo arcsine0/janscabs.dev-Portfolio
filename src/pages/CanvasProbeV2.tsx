@@ -138,7 +138,7 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 								{hasToast && <DialogueToast />}
 							</div>
 						)}
-						<div className="relative z-20 min-h-full">
+						<div className="relative min-h-full">
 							{hasNav && (
 								<ProbeNav
 									interactive={interactive}
