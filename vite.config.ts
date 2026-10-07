@@ -4,6 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 import netlify from "@netlify/vite-plugin";
 
 export default defineConfig({
-	base: "./",
+	base: "/",
 	plugins: [react(), tailwindcss(), netlify()],
 });

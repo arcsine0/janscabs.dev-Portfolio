@@ -1,5 +1,6 @@
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 
 const appResources = Promise.all([
@@ -21,6 +22,8 @@ export function InitialBoot() {
 
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
-		<InitialBoot />
+		<BrowserRouter>
+			<InitialBoot />
+		</BrowserRouter>
 	</StrictMode>,
 );

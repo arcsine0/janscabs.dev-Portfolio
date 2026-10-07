@@ -1,11 +1,15 @@
+import Home from "./Home";
 import Poco from "../components/TerminalAssistant";
 import VHS from "../components/canvasui/VHS";
 
 const probeModes = [
 	"base",
 	"nav",
-	"scroll",
+	"hero",
+	"snap",
 	"poco",
+	"poco-bg",
+	"toast",
 	"nav-poco",
 	"all",
 ] as const;
@@ -23,18 +27,44 @@ export function canvasProbeV2ModeFromHash(
 }
 
 const modeLabels: Record<CanvasProbeV2Mode, string> = {
-	base: "static target only",
-	nav: "base + navigation",
-	scroll: "base + internal scroll region",
-	poco: "base + Poco engine",
+	base: "home content",
+	nav: "home + navigation",
+	hero: "home + full hero",
+	snap: "hero + snap scroll",
+	poco: "hero + foreground Poco",
+	"poco-bg": "home + background Poco",
+	toast: "home + dialogue toast",
 	"nav-poco": "navigation + Poco engine",
-	all: "navigation + scroll region + Poco",
+	all: "all home layers",
 };
+
+function DialogueToast() {
+	return (
+		<div
+			className="toast toast-end toast-bottom assistant-toast"
+			style={{ top: "auto", bottom: "1rem" }}
+		>
+			<div role="alert" className="alert alert-outline">
+				<div className="avatar avatar-placeholder assistant-toast-avatar">
+					<div className="bg-primary font-mono text-base text-primary-content">
+						<span>⦿ᵕ</span>
+					</div>
+				</div>
+				<span>Diagnostic dialogue relay online.</span>
+			</div>
+		</div>
+	);
+}
 
 function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 	const hasNav = mode === "nav" || mode === "nav-poco" || mode === "all";
-	const hasScroll = mode === "scroll" || mode === "all";
-	const hasPoco = mode === "poco" || mode === "nav-poco" || mode === "all";
+	const hasHero =
+		mode === "hero" || mode === "snap" || mode === "poco" || mode === "all";
+	const hasSnap = mode === "snap" || mode === "all";
+	const hasPoco =
+		mode === "poco" || mode === "poco-bg" || mode === "nav-poco" || mode === "all";
+	const hasBackgroundPoco = mode === "poco-bg";
+	const hasToast = mode === "toast" || mode === "all";
 
 	return (
 		<main className="grid min-h-screen place-items-center bg-base-100 px-4 py-8 text-base-content">
@@ -53,43 +83,27 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 					scanlines={0.12}
 					grain={0.08}
 					vignette={0.35}
+					contentClassName={hasSnap ? "home-hero-snap" : undefined}
+					contentId="canvas-probe-v2-scroll"
 				>
-					<div className="terminal-app relative h-full overflow-hidden">
+					<div className="terminal-app relative min-h-full">
 						{hasPoco && (
 							<div className="assistant-stage">
-								<Poco page="home" pastHero={false} />
+								<Poco page="home" pastHero={hasBackgroundPoco} />
 							</div>
 						)}
-						<div
-							className={`relative z-20 h-full p-6 sm:p-8 ${
-								hasScroll ? "overflow-y-auto" : "overflow-hidden"
-							}`}
-						>
+						<div className="relative z-20 min-h-full">
 							{hasNav && (
-								<nav className="mb-8 flex items-center justify-between border-b border-primary/30 pb-4 text-xs tracking-[0.12em] sm:text-sm">
+								<nav className="navbar terminal-panel relative z-20 px-4 py-3 text-xs tracking-[0.12em] sm:px-6 sm:text-sm">
 									<span>JANS//DEV</span>
-									<span>[HOME] [PERSONNEL] [PROJECTS]</span>
+									<span className="ml-auto">[HOME] [PERSONNEL] [PROJECTS]</span>
 								</nav>
 							)}
-							<p className="terminal-label">CAPTURE TARGET // {mode.toUpperCase()}</p>
-							<h2 className="mt-5 text-4xl leading-none sm:text-5xl">
-								Signal received.
-							</h2>
-							<p className="mt-5 max-w-xl text-sm leading-6 text-base-content/75 sm:text-base sm:leading-7">
-								Each route uses the same fixed VHS target and adds one real home
-								layer at a time.
-							</p>
-							{hasScroll && (
-								<div className="mt-8 space-y-6 border-t border-primary/30 pt-6 text-sm text-base-content/75">
-									{Array.from({ length: 8 }, (_, index) => (
-										<p key={index}>
-											SCROLL RECORD {String(index + 1).padStart(2, "0")} // internal
-											capture content remains deliberately longer than the panel.
-										</p>
-									))}
-								</div>
-							)}
+							<div className="mx-auto max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
+								<Home showHero={hasHero} />
+							</div>
 						</div>
+						{hasToast && <DialogueToast />}
 					</div>
 				</VHS>
 

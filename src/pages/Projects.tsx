@@ -1,8 +1,9 @@
 import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const records = ["01", "02", "03", "04"];
 
-function Projects({ onReturnHome }: { onReturnHome: () => void }) {
+function Projects() {
 	return (
 		<main className="py-12 sm:py-16">
 			<header className="mb-8 flex flex-col gap-5 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
@@ -56,9 +57,9 @@ function Projects({ onReturnHome }: { onReturnHome: () => void }) {
 				</div>
 			</section>
 
-			<button className="btn btn-ghost btn-sm" onClick={onReturnHome}>
+			<Link className="btn btn-ghost btn-sm" to="/">
 				<ArrowLeft className="size-4" /> Return to home
-			</button>
+			</Link>
 		</main>
 	);
 }

@@ -1,6 +1,7 @@
 import { ArrowLeft, Github, Linkedin, Mail, Phone } from "lucide-react";
+import { Link } from "react-router-dom";
 
-function About({ onReturnHome }: { onReturnHome: () => void }) {
+function About() {
 	return (
 		<main className="py-12 sm:py-16">
 			<header className="mb-8 sm:mb-12">
@@ -186,12 +187,12 @@ function About({ onReturnHome }: { onReturnHome: () => void }) {
 						</div>
 					</section>
 
-					<button
+					<Link
+						to="/"
 						className="btn btn-ghost btn-sm justify-self-start"
-						onClick={onReturnHome}
 					>
 						<ArrowLeft className="size-4" /> Return to home
-					</button>
+					</Link>
 				</div>
 			</div>
 		</main>
