@@ -3,7 +3,15 @@ import Home from "./Home";
 import Poco from "../components/TerminalAssistant";
 import VHS from "../components/canvasui/VHS";
 
-const probeModes = ["base", "nav", "poco", "toast", "all", "interactions"] as const;
+const probeModes = [
+	"base",
+	"nav",
+	"poco",
+	"toast",
+	"all",
+	"interactions",
+	"main-geometry",
+] as const;
 
 export type CanvasProbeV2Mode = (typeof probeModes)[number];
 
@@ -24,6 +32,7 @@ const modeLabels: Record<CanvasProbeV2Mode, string> = {
 	toast: "Poco state + dialogue toast",
 	all: "complete home composition",
 	interactions: "complete composition + live controls",
+	"main-geometry": "main-index capture geometry",
 };
 
 function ProbeNav({
@@ -74,7 +83,8 @@ function ProbeNav({
 
 function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 	const [pastHero, setPastHero] = useState(false);
-	const interactive = mode === "interactions";
+	const matchesMainGeometry = mode === "main-geometry";
+	const interactive = mode === "interactions" || matchesMainGeometry;
 	const complete = mode === "all" || interactive;
 	const hasNav = mode !== "base";
 	const hasPoco = mode === "poco" || mode === "toast" || complete;
@@ -107,18 +117,33 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 
 				<VHS
 					className="relative h-full w-full overflow-hidden border border-primary/70 bg-base-100 shadow-[0_0_18px_rgb(71_255_125_/_0.2)]"
-					barrel={0.2}
-					scanlines={0.12}
-					grain={0.08}
-					vignette={0.35}
+					barrel={matchesMainGeometry ? 0.5 : 0.2}
+					scanlines={matchesMainGeometry ? 0.18 : 0.12}
+					grain={matchesMainGeometry ? 0.12 : 0.08}
+					vignette={matchesMainGeometry ? 0.75 : 0.35}
+					saturation={matchesMainGeometry ? 0.45 : undefined}
 					contentClassName={hasHero ? "home-hero-snap" : undefined}
 					contentId="canvas-probe-v2-scroll"
+					contentStyle={
+						matchesMainGeometry
+							? {
+									width: "100vw",
+									minWidth: "100vw",
+									height: "100dvh",
+									minHeight: "100dvh",
+								}
+							: undefined
+					}
 					onScroll={handleScroll}
 				>
 					<div className="terminal-app relative min-h-full">
 						{hasPoco && (
 							<div className="assistant-stage">
-								<Poco page="home" pastHero={pastHero} />
+								<Poco
+									enableDialogueToast={!matchesMainGeometry}
+									page="home"
+									pastHero={pastHero}
+								/>
 							</div>
 						)}
 						<div className="relative min-h-full">
