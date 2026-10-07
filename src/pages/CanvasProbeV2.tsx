@@ -1,4 +1,4 @@
-import { useState, type UIEvent } from "react";
+import { useEffect, useState, type UIEvent } from "react";
 import Home from "./Home";
 import Poco from "../components/TerminalAssistant";
 import VHS from "../components/canvasui/VHS";
@@ -11,6 +11,7 @@ const probeModes = [
 	"all",
 	"interactions",
 	"main-geometry",
+	"main-mount",
 ] as const;
 
 export type CanvasProbeV2Mode = (typeof probeModes)[number];
@@ -33,6 +34,7 @@ const modeLabels: Record<CanvasProbeV2Mode, string> = {
 	all: "complete home composition",
 	interactions: "complete composition + live controls",
 	"main-geometry": "main-index capture geometry",
+	"main-mount": "main-index initial scroll effect",
 };
 
 function ProbeNav({
@@ -83,12 +85,19 @@ function ProbeNav({
 
 function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 	const [pastHero, setPastHero] = useState(false);
-	const matchesMainGeometry = mode === "main-geometry";
+	const matchesMainMount = mode === "main-mount";
+	const matchesMainGeometry = mode === "main-geometry" || matchesMainMount;
 	const interactive = mode === "interactions" || matchesMainGeometry;
 	const complete = mode === "all" || interactive;
 	const hasNav = mode !== "base";
 	const hasPoco = mode === "poco" || mode === "toast" || complete;
 	const hasHero = hasPoco;
+
+	useEffect(() => {
+		if (!matchesMainMount) return;
+		setPastHero(false);
+		document.getElementById("canvas-probe-v2-scroll")?.scrollTo({ top: 0 });
+	}, [matchesMainMount]);
 
 	const handleScroll = (event: UIEvent<HTMLDivElement>) => {
 		if (!hasHero) return;
@@ -117,11 +126,11 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 
 				<VHS
 					className="relative h-full w-full overflow-hidden border border-primary/70 bg-base-100 shadow-[0_0_18px_rgb(71_255_125_/_0.2)]"
-					barrel={matchesMainGeometry ? 0.5 : 0.2}
-					scanlines={matchesMainGeometry ? 0.18 : 0.12}
-					grain={matchesMainGeometry ? 0.12 : 0.08}
-					vignette={matchesMainGeometry ? 0.75 : 0.35}
-					saturation={matchesMainGeometry ? 0.45 : undefined}
+					barrel={0.5}
+					scanlines={0.18}
+					grain={0.12}
+					vignette={0.75}
+					saturation={0.45}
 					contentClassName={hasHero ? "home-hero-snap" : undefined}
 					contentId="canvas-probe-v2-scroll"
 					contentStyle={
