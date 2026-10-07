@@ -3,7 +3,7 @@ import Home from "./Home";
 import Poco from "../components/TerminalAssistant";
 import VHS from "../components/canvasui/VHS";
 
-const probeModes = ["base", "nav", "poco", "toast", "all"] as const;
+const probeModes = ["base", "nav", "poco", "toast", "all", "interactions"] as const;
 
 export type CanvasProbeV2Mode = (typeof probeModes)[number];
 
@@ -23,6 +23,7 @@ const modeLabels: Record<CanvasProbeV2Mode, string> = {
 	poco: "navigation + hero/snap + Poco",
 	toast: "Poco state + dialogue toast",
 	all: "complete home composition",
+	interactions: "complete composition + live controls",
 };
 
 function DialogueToast() {
@@ -40,7 +41,15 @@ function DialogueToast() {
 	);
 }
 
-function ProbeNav({ visible }: { visible: boolean }) {
+function ProbeNav({
+	visible,
+	interactive,
+	onHome,
+}: {
+	visible: boolean;
+	interactive: boolean;
+	onHome: () => void;
+}) {
 	return (
 		<div className="home-nav-slot">
 			<header
@@ -48,10 +57,31 @@ function ProbeNav({ visible }: { visible: boolean }) {
 					visible ? "terminal-nav--visible" : ""
 				}`}
 			>
-				<span className="navbar-start w-auto flex-none">JANS//DEV</span>
-				<span className="navbar-end ml-auto w-auto flex-none">
-					[HOME] [PERSONNEL] [PROJECTS]
-				</span>
+				{interactive ? (
+					<>
+						<button className="navbar-start w-auto flex-none" type="button" onClick={onHome}>
+							JANS//DEV
+						</button>
+						<div className="navbar-end ml-auto w-auto flex-none gap-3">
+							<button className="link link-hover" type="button" onClick={onHome}>
+								[HOME]
+							</button>
+							<button className="link link-hover" type="button" onClick={onHome}>
+								[PERSONNEL]
+							</button>
+							<button className="link link-hover" type="button" onClick={onHome}>
+								[PROJECTS]
+							</button>
+						</div>
+					</>
+				) : (
+					<>
+						<span className="navbar-start w-auto flex-none">JANS//DEV</span>
+						<span className="navbar-end ml-auto w-auto flex-none">
+							[HOME] [PERSONNEL] [PROJECTS]
+						</span>
+					</>
+				)}
 			</header>
 		</div>
 	);
@@ -59,16 +89,25 @@ function ProbeNav({ visible }: { visible: boolean }) {
 
 function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 	const [pastHero, setPastHero] = useState(false);
+	const interactive = mode === "interactions";
+	const complete = mode === "all" || interactive;
 	const hasNav = mode !== "base";
-	const hasPoco = mode === "poco" || mode === "toast" || mode === "all";
+	const hasPoco = mode === "poco" || mode === "toast" || complete;
 	const hasHero = hasPoco;
-	const hasToast = (mode === "toast" || mode === "all") && pastHero;
+	const hasToast = (mode === "toast" || complete) && pastHero;
 
 	const handleScroll = (event: UIEvent<HTMLDivElement>) => {
 		if (!hasHero) return;
 		const hero = event.currentTarget.querySelector<HTMLElement>("[data-home-hero]");
 		const next = Boolean(hero && event.currentTarget.scrollTop >= hero.offsetHeight - 1);
 		setPastHero((current) => (current === next ? current : next));
+	};
+	const scrollToContent = () => {
+		const scroller = document.getElementById("canvas-probe-v2-scroll");
+		const content = scroller?.querySelector<HTMLElement>("#home-content");
+		if (scroller && content) {
+			scroller.scrollTo({ top: content.offsetTop, behavior: "smooth" });
+		}
 	};
 
 	return (
@@ -100,10 +139,21 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 							</div>
 						)}
 						<div className="relative z-20 min-h-full">
-							{hasNav && <ProbeNav visible={!hasHero || pastHero} />}
+							{hasNav && (
+								<ProbeNav
+									interactive={interactive}
+									onHome={() =>
+										document.getElementById("canvas-probe-v2-scroll")?.scrollTo({ top: 0 })
+									}
+									visible={!hasHero || pastHero}
+								/>
+							)}
 							<div className="mx-auto max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
-								<Home showHero={hasHero} />
-								{mode === "all" && (
+								<Home
+									onScrollToContent={interactive ? scrollToContent : undefined}
+									showHero={hasHero}
+								/>
+								{complete && (
 									<footer className="terminal-section pt-6 text-sm">
 										<p className="terminal-label">COPYRIGHT {new Date().getFullYear()} // JANS CABALLEGAN</p>
 									</footer>
