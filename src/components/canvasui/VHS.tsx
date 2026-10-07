@@ -395,6 +395,8 @@ export function createVHS(
 	let contentDirty = false;
 	let wake = () => {};
 	let captureFailed = false;
+	let missingPaintRetries = 0;
+	let paintFrame = 0;
 
 	if (htmlInCanvas) {
 		paintable.onpaint = () => {
@@ -404,6 +406,14 @@ export function createVHS(
 				contentDirty = true;
 				wake();
 			} catch (error) {
+				const missingPaintRecord =
+					error instanceof DOMException &&
+					error.message.includes("No cached paint record");
+				if (missingPaintRecord && missingPaintRetries < 3) {
+					missingPaintRetries += 1;
+					paintFrame = requestAnimationFrame(() => paintable.requestPaint?.());
+					return;
+				}
 				if (captureFailed) return;
 				captureFailed = true;
 				paintable.onpaint = null;
@@ -467,7 +477,6 @@ export function createVHS(
 
 	let contentMaxX = 1;
 	let paintReady = false;
-	let initialPaintFrame = 0;
 
 	let bezel: [number, number, number] = [0, 0, 0];
 	const bezelProbe = document.createElement("canvas");
@@ -520,7 +529,7 @@ export function createVHS(
 	syncCanvasSize();
 	syncBezelColor();
 	if (htmlInCanvas) {
-		initialPaintFrame = requestAnimationFrame(() => {
+		paintFrame = requestAnimationFrame(() => {
 			paintReady = true;
 			paintable.requestPaint!();
 		});
@@ -676,7 +685,7 @@ export function createVHS(
 		},
 		destroy() {
 			destroyed = true;
-			cancelAnimationFrame(initialPaintFrame);
+			cancelAnimationFrame(paintFrame);
 			cancelAnimationFrame(raf);
 			observer.disconnect();
 			intersection.disconnect();

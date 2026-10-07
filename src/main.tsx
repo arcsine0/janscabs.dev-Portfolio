@@ -40,9 +40,11 @@ export function InitialBoot() {
 
 	return (
 		<>
-			<Suspense fallback={null}>
-				<App />
-			</Suspense>
+			{complete && (
+				<Suspense fallback={null}>
+					<App />
+				</Suspense>
+			)}
 			{!complete && <TerminalLoader boot fading={fading} />}
 		</>
 	);
