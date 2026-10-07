@@ -37,6 +37,7 @@ function App() {
 	const [flash, setFlash] = useState(0);
 	const [pastHero, setPastHero] = useState(false);
 	if (window.location.hash === "#canvas-probe") return <CanvasProbe />;
+	const canvasProbeV2 = window.location.hash === "#canvas-probe-v2";
 	const handleScreenScroll = (event: UIEvent<HTMLDivElement>) => {
 		if (page !== "home") return;
 		const hero =
@@ -72,7 +73,13 @@ function App() {
 	};
 
 	return (
-		<div className="site-shell">
+		<div
+			className={
+				canvasProbeV2
+					? "grid min-h-screen place-items-center bg-base-100 p-4"
+					: "site-shell"
+			}
+		>
 			{/* <Grid
 				className="ambient-grid"
 				globalPointer
@@ -96,8 +103,14 @@ function App() {
 			>
 				<div className="ambient-grid-surface" aria-hidden="true" />
 			</Grid> */}
-			<div className="crt-bezel">
-				<div className="crt-housing">
+			<div
+				className={
+					canvasProbeV2
+						? "h-[32rem] max-h-[calc(100dvh-2rem)] w-full max-w-3xl"
+						: "crt-bezel"
+				}
+			>
+				<div className={canvasProbeV2 ? "relative h-full w-full" : "crt-housing"}>
 					{/* <svg
 						className="crt-frame"
 						viewBox="0 0 100 100"
@@ -118,10 +131,10 @@ function App() {
 						}
 						contentId="crt-scroll"
 						contentStyle={{
-							width: "100vw",
-							minWidth: "100vw",
-							height: "100dvh",
-							minHeight: "100dvh",
+							width: canvasProbeV2 ? "100%" : "100vw",
+							minWidth: canvasProbeV2 ? 0 : "100vw",
+							height: canvasProbeV2 ? "100%" : "100dvh",
+							minHeight: canvasProbeV2 ? 0 : "100dvh",
 						}}
 						onScroll={handleScreenScroll}
 					>
