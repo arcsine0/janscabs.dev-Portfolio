@@ -11,6 +11,9 @@ import Poco from "./components/TerminalAssistant";
 import TerminalLoader from "./components/TerminalLoader";
 import VHS from "./components/canvasui/VHS";
 import CanvasProbe from "./pages/CanvasProbe";
+import CanvasProbeV2, {
+	canvasProbeV2ModeFromHash,
+} from "./pages/CanvasProbeV2";
 
 const projects = [
 	["01", "SmartTicket", "A considered ticketing experience."],
@@ -37,7 +40,8 @@ function App() {
 	const [flash, setFlash] = useState(0);
 	const [pastHero, setPastHero] = useState(false);
 	if (window.location.hash === "#canvas-probe") return <CanvasProbe />;
-	const canvasProbeV2 = window.location.hash === "#canvas-probe-v2";
+	const canvasProbeV2Mode = canvasProbeV2ModeFromHash(window.location.hash);
+	if (canvasProbeV2Mode) return <CanvasProbeV2 mode={canvasProbeV2Mode} />;
 	const handleScreenScroll = (event: UIEvent<HTMLDivElement>) => {
 		if (page !== "home") return;
 		const hero =
@@ -73,13 +77,7 @@ function App() {
 	};
 
 	return (
-		<div
-			className={
-				canvasProbeV2
-					? "grid min-h-screen place-items-center bg-base-100 p-4"
-					: "site-shell"
-			}
-		>
+		<div className="site-shell">
 			{/* <Grid
 				className="ambient-grid"
 				globalPointer
@@ -103,14 +101,8 @@ function App() {
 			>
 				<div className="ambient-grid-surface" aria-hidden="true" />
 			</Grid> */}
-			<div
-				className={
-					canvasProbeV2
-						? "h-[32rem] max-h-[calc(100dvh-2rem)] w-full max-w-3xl"
-						: "crt-bezel"
-				}
-			>
-				<div className={canvasProbeV2 ? "relative h-full w-full" : "crt-housing"}>
+			<div className="crt-bezel">
+				<div className="crt-housing">
 					{/* <svg
 						className="crt-frame"
 						viewBox="0 0 100 100"
@@ -131,10 +123,10 @@ function App() {
 						}
 						contentId="crt-scroll"
 						contentStyle={{
-							width: canvasProbeV2 ? "100%" : "100vw",
-							minWidth: canvasProbeV2 ? 0 : "100vw",
-							height: canvasProbeV2 ? "100%" : "100dvh",
-							minHeight: canvasProbeV2 ? 0 : "100dvh",
+							width: "100vw",
+							minWidth: "100vw",
+							height: "100dvh",
+							minHeight: "100dvh",
 						}}
 						onScroll={handleScreenScroll}
 					>
