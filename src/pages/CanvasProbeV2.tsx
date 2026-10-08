@@ -85,6 +85,8 @@ function ProbeNav({
 
 function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 	const [pastHero, setPastHero] = useState(false);
+	const [controlsHidden, setControlsHidden] = useState(false);
+	const [controlsRemoved, setControlsRemoved] = useState(false);
 	const matchesMainMount = mode === "main-mount";
 	const matchesMainGeometry = mode === "main-geometry" || matchesMainMount;
 	const interactive = mode === "interactions" || matchesMainGeometry;
@@ -98,6 +100,16 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 		setPastHero(false);
 		document.getElementById("canvas-probe-v2-scroll")?.scrollTo({ top: 0 });
 	}, [matchesMainMount]);
+
+	useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.repeat) return;
+			if (event.key.toLowerCase() === "u") setControlsHidden((hidden) => !hidden);
+			if (event.key.toLowerCase() === "t") setControlsRemoved((removed) => !removed);
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, []);
 
 	const handleScroll = (event: UIEvent<HTMLDivElement>) => {
 		if (!hasHero) return;
@@ -116,13 +128,19 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 	return (
 		<main className="min-h-screen bg-base-100 p-4 text-base-content">
 			<div className="relative h-[calc(100dvh-2rem)] w-full">
-				<header className="pointer-events-none absolute inset-x-4 top-4 z-30 flex flex-wrap items-center justify-between gap-3">
-					<div>
-						<p className="terminal-label">SYS.DIAGNOSTIC // CAPTURE MATRIX</p>
-						<h1 className="mt-2 text-2xl sm:text-3xl">VHS PROBE V2</h1>
-					</div>
-					<span className="badge badge-outline badge-primary">{modeLabels[mode]}</span>
-				</header>
+				{!controlsRemoved && (
+					<header
+						className={`pointer-events-none absolute inset-x-4 top-4 z-30 flex flex-wrap items-center justify-between gap-3 transition-opacity ${
+							controlsHidden ? "opacity-0" : "opacity-100"
+						}`}
+					>
+						<div>
+							<p className="terminal-label">SYS.DIAGNOSTIC // CAPTURE MATRIX</p>
+							<h1 className="mt-2 text-2xl sm:text-3xl">VHS PROBE V2</h1>
+						</div>
+						<span className="badge badge-outline badge-primary">{modeLabels[mode]}</span>
+					</header>
+				)}
 
 				<VHS
 					className="relative h-full w-full overflow-hidden border border-primary/70 bg-base-100 shadow-[0_0_18px_rgb(71_255_125_/_0.2)]"
@@ -148,11 +166,7 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 					<div className="terminal-app relative min-h-full">
 						{hasPoco && (
 							<div className="assistant-stage">
-								<Poco
-									enableDialogueToast={!matchesMainGeometry}
-									page="home"
-									pastHero={pastHero}
-								/>
+								<Poco page="home" pastHero={pastHero} />
 							</div>
 						)}
 						<div className="relative min-h-full">
@@ -180,28 +194,32 @@ function CanvasProbeV2({ mode }: { mode: CanvasProbeV2Mode }) {
 					</div>
 				</VHS>
 
-				<nav
-					className="absolute inset-x-4 bottom-4 z-30 flex flex-wrap gap-2"
-					aria-label="Capture probe layers"
-				>
-					{probeModes.map((item) => (
-						<a
-							className={`btn btn-sm ${item === mode ? "btn-primary" : "btn-ghost"}`}
-							href={`#canvas-probe-v2-${item}`}
-							onClick={(event) => {
-								event.preventDefault();
-								window.location.hash = `canvas-probe-v2-${item}`;
-								window.location.reload();
-							}}
-							key={item}
-						>
-							{item}
+				{!controlsRemoved && (
+					<nav
+						className={`absolute inset-x-4 bottom-4 z-30 flex flex-wrap gap-2 transition-opacity ${
+							controlsHidden ? "pointer-events-none opacity-0" : "opacity-100"
+						}`}
+						aria-label="Capture probe layers"
+					>
+						{probeModes.map((item) => (
+							<a
+								className={`btn btn-sm ${item === mode ? "btn-primary" : "btn-ghost"}`}
+								href={`#canvas-probe-v2-${item}`}
+								onClick={(event) => {
+									event.preventDefault();
+									window.location.hash = `canvas-probe-v2-${item}`;
+									window.location.reload();
+								}}
+								key={item}
+							>
+								{item}
+							</a>
+						))}
+						<a className="btn btn-ghost btn-sm" href="/">
+							Return home
 						</a>
-					))}
-					<a className="btn btn-ghost btn-sm" href="/">
-						Return home
-					</a>
-				</nav>
+					</nav>
+				)}
 			</div>
 		</main>
 	);
