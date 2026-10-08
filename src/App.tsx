@@ -49,17 +49,18 @@ function App() {
 	};
 
 	const scrollToContent = () => {
-		document
-			.getElementById("home-content")
-			?.scrollIntoView({ behavior: "smooth", block: "start" });
+		const scroller = document.getElementById("crt-scroll");
+		const content = scroller?.querySelector<HTMLElement>("#home-content");
+		if (scroller && content) {
+			scroller.scrollTo({ top: content.offsetTop, behavior: "smooth" });
+		}
 	};
 
 	return (
-		<div className="site-shell">
-			<div className="crt-bezel">
-				<div className="crt-housing">
+		<main className="min-h-screen bg-base-100 p-4 text-base-content">
+			<div className="relative h-[calc(100dvh-2rem)] w-full">
 					<VHS
-						className="crt-display"
+						className="relative h-full w-full overflow-hidden border border-primary/70 bg-base-100 shadow-[0_0_18px_rgb(71_255_125_/_0.2)]"
 						barrel={0.5}
 						scanlines={0.18}
 						grain={0.12}
@@ -75,15 +76,11 @@ function App() {
 						}}
 						onScroll={handleScreenScroll}
 					>
-						<div className="terminal-app">
+						<div className="terminal-app relative min-h-full">
 							<div className="assistant-stage">
-								<Poco
-									enableDialogueToast={false}
-									page={page}
-									pastHero={pastHero}
-								/>
+								<Poco page={page} pastHero={pastHero} />
 							</div>
-							<div className="mx-auto min-h-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
+							<div className="relative min-h-full">
 								<div className={page === "home" ? "home-nav-slot" : "page-nav-slot"}>
 									<header
 										className={`navbar terminal-panel terminal-nav px-3 sm:px-6 ${page !== "home" || pastHero ? "terminal-nav--visible" : ""}`}
@@ -119,6 +116,7 @@ function App() {
 										</nav>
 									</header>
 								</div>
+								<div className="mx-auto min-h-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
 								<Suspense fallback={<TerminalLoader />}>
 									<Routes>
 										<Route path="/" element={<Home onScrollToContent={scrollToContent} />} />
@@ -143,12 +141,12 @@ function App() {
 									</div>
 								</footer>
 							</div>
+							</div>
 							{flash > 0 && <span className="terminal-flash" key={flash} />}
 						</div>
 					</VHS>
-				</div>
 			</div>
-		</div>
+		</main>
 	);
 }
 
