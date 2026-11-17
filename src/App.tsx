@@ -61,7 +61,7 @@ function App() {
 			<div className="relative h-[calc(100dvh-2rem)] w-full">
 					<VHS
 						className="relative h-full w-full overflow-hidden border border-primary/70 bg-base-100 shadow-[0_0_18px_rgb(71_255_125_/_0.2)]"
-						barrel={0.5}
+						barrel={0}
 						scanlines={0.18}
 						grain={0.12}
 						vignette={0.75}
