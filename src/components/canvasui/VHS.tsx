@@ -694,6 +694,7 @@ export interface VHSProps extends VHSOptions {
 	contentClassName?: string;
 	contentId?: string;
 	contentStyle?: React.CSSProperties;
+	enableHtmlInCanvas?: boolean;
 	onScroll?: UIEventHandler<HTMLDivElement>;
 	style?: React.CSSProperties;
 }
@@ -706,6 +707,7 @@ export function VHS({
 	contentClassName,
 	contentId,
 	contentStyle,
+	enableHtmlInCanvas = true,
 	onScroll,
 	style,
 	...options
@@ -722,7 +724,7 @@ export function VHS({
 		supportsHtmlInCanvas,
 		() => false,
 	);
-	const native = supported && !failed;
+	const native = enableHtmlInCanvas && supported && !failed;
 
 	useEffect(() => {
 		const source = sourceRef.current;
