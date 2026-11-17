@@ -33,7 +33,7 @@ function App() {
 		const changedRoute = previousPath.current !== location.pathname;
 		previousPath.current = location.pathname;
 		setPastHero(false);
-		document.getElementById("crt-scroll")?.scrollTo({ top: 0 });
+		document.getElementById("terminal-scroll")?.scrollTo({ top: 0 });
 		if (changedRoute) setFlash((value) => value + 1);
 	}, [location.pathname]);
 
@@ -49,7 +49,7 @@ function App() {
 	};
 
 	const scrollToContent = () => {
-		const scroller = document.getElementById("crt-scroll");
+		const scroller = document.getElementById("terminal-scroll");
 		const content = scroller?.querySelector<HTMLElement>("#home-content");
 		if (scroller && content) {
 			scroller.scrollTo({ top: content.offsetTop, behavior: "smooth" });
@@ -67,7 +67,7 @@ function App() {
 						vignette={0.75}
 						saturation={0.45}
 						contentClassName={page === "home" && !pastHero ? "home-hero-snap" : undefined}
-						contentId="crt-scroll"
+						contentId="terminal-scroll"
 						enableHtmlInCanvas={false}
 						contentStyle={{
 							width: "100vw",
