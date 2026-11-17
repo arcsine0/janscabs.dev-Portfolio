@@ -753,7 +753,7 @@ export function VHS({
 			<canvas
 				ref={sourceRef}
 				// @ts-expect-error experimental html-in-canvas attribute
-				layoutsubtree="true"
+				layoutsubtree={native ? "true" : undefined}
 				suppressHydrationWarning
 				style={
 					native
