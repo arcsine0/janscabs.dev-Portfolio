@@ -936,7 +936,7 @@ export function VHS({
 			ref={wrapperRef}
 			className={`${className ?? ""} ${barrelActive ? "vhs-barrel-active" : ""}`.trim()}
 			onClickCapture={remapBarrelClick}
-			onPointerLeaveCapture={clearBarrelHover}
+			onPointerLeave={clearBarrelHover}
 			onPointerMoveCapture={updateBarrelHover}
 			style={{ position: "relative", ...style }}
 		>
