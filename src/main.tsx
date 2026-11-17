@@ -8,6 +8,8 @@ const appResources = Promise.all([
 	import("./App.tsx"),
 	import("./components/TerminalAssistant.tsx"),
 	import("./components/canvasui/VHS.tsx"),
+	import("./pages/About.tsx"),
+	import("./pages/Projects.tsx"),
 	document.fonts?.ready ?? Promise.resolve(),
 ] as const).then(([module]) => module);
 
