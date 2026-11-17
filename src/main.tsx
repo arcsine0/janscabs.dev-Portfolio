@@ -1,6 +1,7 @@
-import { lazy, StrictMode, Suspense } from "react";
+import { lazy, StrictMode, Suspense, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import TerminalLoader from "./components/TerminalLoader";
 import "./index.css";
 
 const appResources = Promise.all([
@@ -13,10 +14,40 @@ const appResources = Promise.all([
 const App = lazy(() => appResources);
 
 export function InitialBoot() {
+	const [complete, setComplete] = useState(
+		() => sessionStorage.getItem("jans.dev.booted") === "true",
+	);
+	const [fading, setFading] = useState(false);
+
+	useEffect(() => {
+		if (complete) return;
+		let active = true;
+		let timeout = 0;
+
+		appResources.then(() => {
+			if (!active) return;
+			setFading(true);
+			timeout = window.setTimeout(() => {
+				sessionStorage.setItem("jans.dev.booted", "true");
+				setComplete(true);
+			}, 320);
+		});
+
+		return () => {
+			active = false;
+			window.clearTimeout(timeout);
+		};
+	}, [complete]);
+
 	return (
-		<Suspense fallback={null}>
-			<App />
-		</Suspense>
+		<>
+			{complete && (
+				<Suspense fallback={null}>
+					<App />
+				</Suspense>
+			)}
+			{!complete && <TerminalLoader boot fading={fading} />}
+		</>
 	);
 }
 
