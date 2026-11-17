@@ -68,7 +68,6 @@ function App() {
 						saturation={0.45}
 						contentClassName={page === "home" && !pastHero ? "home-hero-snap" : undefined}
 						contentId="terminal-scroll"
-						enableHtmlInCanvas={false}
 						contentStyle={{
 							width: "100vw",
 							minWidth: "100vw",
