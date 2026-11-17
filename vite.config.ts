@@ -5,5 +5,5 @@ import netlify from "@netlify/vite-plugin";
 
 export default defineConfig({
 	base: "/",
-	plugins: [react(), tailwindcss(), netlify()],
+	plugins: [react(), tailwindcss(), netlify({ edgeFunctions: { enabled: false } })],
 });
