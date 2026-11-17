@@ -700,6 +700,88 @@ export interface VHSProps extends VHSOptions {
 }
 
 const emptySubscribe = () => () => {};
+// shortcut: custom click targets need semantic markup or cursor:pointer to be discovered.
+const INTERACTIVE_SELECTOR = [
+	"a[href]",
+	"area[href]",
+	"button:not(:disabled)",
+	"input:not(:disabled)",
+	"select:not(:disabled)",
+	"textarea:not(:disabled)",
+	"summary",
+	"label",
+	'[role="button"]',
+	'[role="link"]',
+	'[role="checkbox"]',
+	'[role="combobox"]',
+	'[role="gridcell"]',
+	'[role="menuitem"]',
+	'[role="menuitemcheckbox"]',
+	'[role="menuitemradio"]',
+	'[role="option"]',
+	'[role="radio"]',
+	'[role="searchbox"]',
+	'[role="slider"]',
+	'[role="spinbutton"]',
+	'[role="switch"]',
+	'[role="tab"]',
+	'[role="textbox"]',
+	'[role="treeitem"]',
+	'[tabindex]:not([tabindex="-1"])',
+	'[contenteditable="true"]',
+].join(",");
+
+function findInteractiveTarget(
+	element: Element | null,
+	content: HTMLElement,
+): HTMLElement | null {
+	let current =
+		element instanceof HTMLElement ? element : element?.parentElement;
+	let pointerTarget: HTMLElement | null = null;
+
+	while (current && content.contains(current)) {
+		const enabled = current.getAttribute("aria-disabled") !== "true";
+		if (enabled && current.matches(INTERACTIVE_SELECTOR)) return current;
+		if (
+			enabled &&
+			current !== content &&
+			getComputedStyle(current).cursor === "pointer"
+		) {
+			pointerTarget = current;
+		}
+		if (current === content) break;
+		current = current.parentElement;
+	}
+
+	return pointerTarget;
+}
+
+function getBarrelTarget(
+	clientX: number,
+	clientY: number,
+	amount: number,
+	source: HTMLCanvasElement,
+	content: HTMLElement,
+): HTMLElement | null {
+	const bounds = source.getBoundingClientRect();
+	const contentBounds = content.getBoundingClientRect();
+	if (!bounds.width || !bounds.height) return null;
+
+	const maxX = Math.min(1, Math.max(0.05, content.clientWidth / bounds.width));
+	const x = (clientX - bounds.left) / bounds.width;
+	const y = (clientY - bounds.top) / bounds.height;
+	const cx = (x / maxX) * 2 - 1;
+	const cy = (1 - y) * 2 - 1;
+	const scale = 1 + amount * 0.15 * (cx * cx + cy * cy);
+	const sourceX = (cx * scale * 0.5 + 0.5) * maxX * content.clientWidth;
+	const sourceY = (1 - (cy * scale * 0.5 + 0.5)) * content.clientHeight;
+	const hit = document.elementFromPoint(
+		contentBounds.left + sourceX,
+		contentBounds.top + sourceY,
+	);
+
+	return findInteractiveTarget(hit, content);
+}
 
 export function VHS({
 	children,
@@ -715,7 +797,10 @@ export function VHS({
 	const sourceRef = useRef<HTMLCanvasElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
 	const outputRef = useRef<HTMLCanvasElement>(null);
+	const wrapperRef = useRef<HTMLDivElement>(null);
 	const instanceRef = useRef<VHSInstance | null>(null);
+	const hoveredTargetRef = useRef<HTMLElement | null>(null);
+	const nativeHoverTargetRef = useRef<HTMLElement | null>(null);
 	const [initialOptions] = useState(options);
 	const [failed, setFailed] = useState(false);
 
@@ -725,6 +810,104 @@ export function VHS({
 		() => false,
 	);
 	const native = enableHtmlInCanvas && supported && !failed;
+	const barrelActive = native && (options.barrel ?? DEFAULTS.barrel) > 0;
+	const clearBarrelHover = () => {
+		hoveredTargetRef.current?.removeAttribute("data-vhs-warp-hover");
+		nativeHoverTargetRef.current?.removeAttribute("data-vhs-native-hover");
+		hoveredTargetRef.current = null;
+		nativeHoverTargetRef.current = null;
+		if (wrapperRef.current)
+			wrapperRef.current.style.cursor = style?.cursor ?? "";
+	};
+	const updateBarrelHover = (event: React.PointerEvent<HTMLDivElement>) => {
+		const source = sourceRef.current;
+		const content = contentRef.current;
+		if (!barrelActive || event.pointerType === "touch" || !source || !content) {
+			clearBarrelHover();
+			return;
+		}
+
+		const wrapper = wrapperRef.current;
+		// Ignore the cursor set by the previous remap while discovering this target.
+		if (wrapper) wrapper.style.cursor = "auto";
+		const target = getBarrelTarget(
+			event.clientX,
+			event.clientY,
+			options.barrel ?? DEFAULTS.barrel,
+			source,
+			content,
+		);
+		const nativeTarget = findInteractiveTarget(
+			event.target as Element,
+			content,
+		);
+		const targetCursor = target ? getComputedStyle(target).cursor : "";
+		if (hoveredTargetRef.current !== target) {
+			hoveredTargetRef.current?.removeAttribute("data-vhs-warp-hover");
+			target?.setAttribute("data-vhs-warp-hover", "");
+			hoveredTargetRef.current = target;
+		}
+		const mismatchedNativeTarget =
+			nativeTarget === target ? null : nativeTarget;
+		if (nativeHoverTargetRef.current !== mismatchedNativeTarget) {
+			nativeHoverTargetRef.current?.removeAttribute("data-vhs-native-hover");
+			mismatchedNativeTarget?.setAttribute("data-vhs-native-hover", "");
+			nativeHoverTargetRef.current = mismatchedNativeTarget;
+		}
+
+		if (wrapper) {
+			wrapper.style.cursor = target
+				? targetCursor === "auto"
+					? "pointer"
+					: targetCursor
+				: (style?.cursor ?? "");
+		}
+	};
+	const remapBarrelClick = (event: React.MouseEvent<HTMLDivElement>) => {
+		if (!barrelActive || !event.isTrusted || event.detail === 0) return;
+
+		const contentElement = contentRef.current;
+		const source = sourceRef.current;
+		if (!source || !contentElement) return;
+
+		const wrapper = wrapperRef.current;
+		const cursor = wrapper?.style.cursor;
+		if (wrapper) wrapper.style.cursor = "auto";
+		const current = findInteractiveTarget(
+			event.target as Element,
+			contentElement,
+		);
+		const target = getBarrelTarget(
+			event.clientX,
+			event.clientY,
+			options.barrel ?? DEFAULTS.barrel,
+			source,
+			contentElement,
+		);
+		if (wrapper) wrapper.style.cursor = cursor ?? "";
+		if (current === target || (!current && !target)) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+		event.nativeEvent.stopImmediatePropagation();
+		target?.click();
+	};
+	useEffect(
+		() => () => {
+			hoveredTargetRef.current?.removeAttribute("data-vhs-warp-hover");
+			nativeHoverTargetRef.current?.removeAttribute("data-vhs-native-hover");
+		},
+		[],
+	);
+	useEffect(() => {
+		if (barrelActive) return;
+		hoveredTargetRef.current?.removeAttribute("data-vhs-warp-hover");
+		nativeHoverTargetRef.current?.removeAttribute("data-vhs-native-hover");
+		hoveredTargetRef.current = null;
+		nativeHoverTargetRef.current = null;
+		if (wrapperRef.current)
+			wrapperRef.current.style.cursor = style?.cursor ?? "";
+	}, [barrelActive, style?.cursor]);
 
 	useEffect(() => {
 		const source = sourceRef.current;
@@ -749,7 +932,14 @@ export function VHS({
 	});
 
 	return (
-		<div className={className} style={{ position: "relative", ...style }}>
+		<div
+			ref={wrapperRef}
+			className={`${className ?? ""} ${barrelActive ? "vhs-barrel-active" : ""}`.trim()}
+			onClickCapture={remapBarrelClick}
+			onPointerLeaveCapture={clearBarrelHover}
+			onPointerMoveCapture={updateBarrelHover}
+			style={{ position: "relative", ...style }}
+		>
 			<canvas
 				ref={sourceRef}
 				// @ts-expect-error experimental html-in-canvas attribute
