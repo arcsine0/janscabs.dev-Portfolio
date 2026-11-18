@@ -381,7 +381,7 @@ function Poco({
 			</div>
 			{enableDialogueToast && isBackground && isTalking && activeLine && (
 				<div
-					className="toast toast-end toast-bottom assistant-toast"
+					className="toast toast-end toast-top assistant-toast"
 					aria-live="polite"
 				>
 					<div role="alert" className="alert alert-outline">

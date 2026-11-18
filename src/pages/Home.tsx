@@ -1,4 +1,6 @@
 import { ArrowUpRight, ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
+import TerminalGlyphText from "../components/TerminalGlyphText";
 
 const projects = [
 	["01", "SmartTicket", "A considered ticketing experience."],
@@ -32,72 +34,104 @@ function Home({ showHero = true, onScrollToContent }: HomeProps) {
 					</button>
 				</section>
 			)}
-			<div id="home-content">
-				<section className="hero min-h-[58vh] py-12 sm:py-20">
-					<div className="hero-content w-full max-w-none items-end justify-between gap-10 p-0 max-lg:flex-col max-lg:items-start lg:flex-row">
-						<div className="max-w-3xl">
+			<div id="home-content" className="home-content">
+				<section className="home-brief py-12 sm:py-20" data-scroll-flicker>
+					<div className="home-brief-frame">
+						<span aria-hidden="true" className="home-brief-frame-label">
+							+-------------------- SYS // 01 --------------------+
+						</span>
+						<div className="home-brief-copy">
 							<p className="terminal-label mb-5">
 								SYS.ACCESS // FULL-STACK TYPESCRIPT DEVELOPER
 							</p>
-							<h1 className="text-5xl font-normal leading-[0.92] tracking-[-0.05em] text-base-content sm:text-7xl lg:text-8xl">
-								Building useful things for the internet.
+							<h1
+								aria-label="Building useful things for the internet."
+								className="home-brief-title"
+								data-scroll-flicker
+							>
+								<TerminalGlyphText
+									seed="home-brief-title"
+									text="Building useful things for the internet."
+								/>
 							</h1>
-							<p className="mt-7 max-w-xl text-base leading-7 text-base-content/75">
-								I design and ship clear, resilient web experiences where thoughtful
-								interface work meets reliable engineering.
+							<p className="home-brief-description">
+								I design clear web experiences backed by dependable engineering.
 							</p>
 						</div>
-						<aside className="card card-border terminal-panel w-full max-w-sm">
-							<div className="card-body gap-4 p-5">
-								<p className="terminal-label">// OPERATOR STATUS</p>
-								<p className="text-lg">ONLINE / AVAILABLE</p>
-								<div className="terminal-rule" />
-								<p className="text-sm text-base-content/75">
-									Based in the Philippines.
+					</div>
+				</section>
+
+				<section id="work" className="terminal-section home-archive py-14 sm:py-20" data-scroll-flicker>
+					<div className="home-archive-layout">
+						<header className="home-archive-heading">
+							<p className="terminal-label mb-4">ARCHIVE // 02</p>
+							<h2
+								aria-label="Mission Select"
+								className="home-archive-title"
+								data-scroll-flicker
+							>
+								<TerminalGlyphText seed="mission-select" text={"MISSION\nSELECT"} />
+							</h2>
+							<p className="home-archive-note">CHOOSE A FILE TO OPEN</p>
+							<div className="home-archive-count" aria-label="3 project records">
+								<strong>03</strong>
+								<span>
+									RECORDS
 									<br />
-									Working worldwide.
-								</p>
-								<div className="card-actions mt-2">
-									<a className="btn btn-primary btn-sm" href="mailto:hello@janscabs.dev">
-										Open channel <ArrowUpRight className="size-4" />
-									</a>
-								</div>
+									ON FILE
+								</span>
 							</div>
-						</aside>
+						</header>
+						<div className="home-archive-results">
+							<div className="home-record-list">
+								{projects.map(([number, name, description]) => (
+									<article className="home-record" data-scroll-flicker key={number}>
+										<span className="home-record-number">{number}</span>
+										<div className="home-record-copy">
+											<p className="terminal-label">// RECORD {number}</p>
+											<h3 className="mt-2 text-xl font-normal sm:text-2xl">{name}</h3>
+											<p className="mt-2 text-sm text-base-content/75">{description}</p>
+										</div>
+										<Link className="btn btn-ghost btn-sm home-record-link" to="/projects">
+											Inspect <ArrowUpRight aria-hidden="true" className="size-4" />
+										</Link>
+									</article>
+								))}
+							</div>
+							<Link className="home-archive-link link link-hover mt-6 inline-flex" to="/projects">
+								OPEN FULL ARCHIVE <span aria-hidden="true">------------------&gt;</span>
+							</Link>
+						</div>
 					</div>
 				</section>
-				<section id="work" className="terminal-section py-14 sm:py-20">
-					<div className="mb-8 flex items-baseline justify-between">
-						<h2 className="text-2xl font-normal sm:text-3xl">SELECTED WORK</h2>
-						<span className="terminal-label">03 RECORDS</span>
+
+				<section className="terminal-section home-dossier py-14 sm:py-20" data-scroll-flicker>
+					<div className="home-dossier-mark" aria-hidden="true">
+						<span>PERSONNEL</span>
+						<strong>J//C</strong>
+						<span>PROFILE VERIFIED</span>
 					</div>
-					<div className="grid gap-4 md:grid-cols-3">
-						{projects.map(([number, name, description]) => (
-							<article className="card card-border terminal-panel" key={number}>
-								<div className="card-body p-6">
-									<p className="terminal-label">REC.{number}</p>
-									<h3 className="card-title mt-8 text-xl font-normal">{name}</h3>
-									<p className="text-sm text-base-content/75">{description}</p>
-									<div className="card-actions mt-4">
-										<a className="btn btn-ghost btn-sm px-0" href="#contact">
-											View record <ArrowUpRight className="size-4" />
-										</a>
-									</div>
-								</div>
-							</article>
-						))}
+					<div className="home-dossier-copy">
+						<p className="terminal-label mb-3">DOSSIER // 03</p>
+						<h2
+							aria-label="Human interface, machine precision."
+							className="whitespace-pre-line text-2xl font-normal sm:text-3xl"
+							data-scroll-flicker
+						>
+							<TerminalGlyphText
+								seed="home-dossier-title"
+								text={"HUMAN INTERFACE,\nMACHINE PRECISION."}
+							/>
+						</h2>
+						<p className="mt-5 max-w-xl text-base leading-7 text-base-content/75">
+							I am Raphael "Jans" Caballegan, a full-stack developer focused on
+							elegant products, maintainable systems, and the space where the two meet.
+						</p>
+						<Link className="btn btn-ghost btn-sm mt-5" to="/personnel">
+							Read personnel file <ArrowUpRight aria-hidden="true" className="size-4" />
+						</Link>
 					</div>
-				</section>
-				<section className="terminal-section grid gap-8 py-14 sm:grid-cols-2 sm:py-20">
-					<h2 className="text-2xl font-normal sm:text-3xl">
-						HUMAN INTERFACE,
-						<br />
-						MACHINE PRECISION.
-					</h2>
-					<p className="max-w-xl text-base leading-7 text-base-content/75">
-						I am Raphael "Jans" Caballegan, a full-stack developer focused on
-						elegant products, maintainable systems, and the space where the two meet.
-					</p>
+					<span className="home-dossier-coordinate terminal-label">BASE // PHILIPPINES</span>
 				</section>
 			</div>
 		</main>

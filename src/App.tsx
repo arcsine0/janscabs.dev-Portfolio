@@ -1,6 +1,21 @@
-import { lazy, Suspense, useEffect, useRef, useState, type UIEvent } from "react";
-import { Github, Mail, Terminal } from "lucide-react";
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import {
+	lazy,
+	Suspense,
+	useEffect,
+	useRef,
+	useState,
+	type MouseEvent as ReactMouseEvent,
+	type PointerEvent as ReactPointerEvent,
+	type UIEvent,
+} from "react";
+import UseAnimations from "react-useanimations";
+import type { Animation } from "react-useanimations";
+import folderAnimation from "react-useanimations/lib/folder";
+import homeAnimation from "react-useanimations/lib/home";
+import mailAnimation from "react-useanimations/lib/mail";
+import userAnimation from "react-useanimations/lib/user";
+import { Github, Mail } from "lucide-react";
+import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Poco from "./components/TerminalAssistant";
 import TerminalLoader from "./components/TerminalLoader";
 import VHS from "./components/canvasui/VHS";
@@ -14,6 +29,48 @@ type Page = "home" | "projects" | "about";
 
 const About = lazy(() => import("./pages/About"));
 const Projects = lazy(() => import("./pages/Projects"));
+
+type VHSAnimatedIconElement = HTMLSpanElement & {
+	vhsHoverEnter?: () => void;
+	vhsHoverLeave?: () => void;
+};
+
+function AnimatedDockIcon({ animation }: { animation: Animation }) {
+	return (
+		<UseAnimations
+			animation={animation}
+			className="terminal-dock-icon"
+			interaction="hover"
+			render={(eventProps, animationProps) => (
+				<span
+					{...animationProps}
+					{...eventProps}
+					data-vhs-animate-hover=""
+					ref={(element) => {
+						animationProps.ref(element);
+						if (!element) return;
+						const icon = element as VHSAnimatedIconElement;
+						icon.vhsHoverEnter = () => {
+							eventProps.onPointerEnter({
+								defaultPrevented: false,
+								pointerType: "mouse",
+							} as ReactPointerEvent<HTMLElement>);
+							eventProps.onMouseEnter({
+								defaultPrevented: false,
+							} as ReactMouseEvent<HTMLElement>);
+						};
+						icon.vhsHoverLeave = () => {
+							eventProps.onMouseLeave({
+								defaultPrevented: false,
+							} as ReactMouseEvent<HTMLElement>);
+						};
+					}}
+				/>
+			)}
+			size={24}
+		/>
+	);
+}
 
 function pageForPath(pathname: string): Page {
 	if (pathname === "/projects") return "projects";
@@ -36,6 +93,76 @@ function App() {
 		document.getElementById("terminal-scroll")?.scrollTo({ top: 0 });
 		if (changedRoute) setFlash((value) => value + 1);
 	}, [location.pathname]);
+	useEffect(() => {
+		const root = document.getElementById("terminal-scroll");
+		if (!root) return;
+		const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		const targets = new Set<HTMLElement>();
+		let wasAtTop = root.scrollTop <= 64;
+
+		let observer: IntersectionObserver | undefined;
+		const createObserver = () => {
+			observer?.disconnect();
+			if (reducedMotion || !("IntersectionObserver" in window)) {
+				targets.forEach((target) => target.setAttribute("data-scroll-visible", "true"));
+				return;
+			}
+			observer = new IntersectionObserver(
+				(entries) => {
+					entries.forEach(({ isIntersecting, target }) => {
+						if (!isIntersecting) return;
+						target.setAttribute("data-scroll-visible", "true");
+					});
+				},
+				{
+					root,
+					rootMargin: `0px 0px -${Math.round(root.clientHeight * 0.35)}px 0px`,
+				},
+			);
+			targets.forEach((target) => {
+				if (!target.hasAttribute("data-scroll-visible")) observer?.observe(target);
+			});
+		};
+		if ("IntersectionObserver" in window) {
+			createObserver();
+		}
+		const observeNewTargets = () => {
+			root.querySelectorAll<HTMLElement>("[data-scroll-flicker]").forEach((target) => {
+				if (targets.has(target)) return;
+				targets.add(target);
+				if (reducedMotion || !observer) {
+					target.setAttribute("data-scroll-visible", "true");
+				} else {
+					observer.observe(target);
+				}
+			});
+		};
+		observeNewTargets();
+		const mutations = new MutationObserver(observeNewTargets);
+		mutations.observe(root, { childList: true, subtree: true });
+		const resetRevealsAtTop = () => {
+			const isAtTop = root.scrollTop <= 64;
+			if (isAtTop && !wasAtTop) {
+				root.querySelectorAll<HTMLElement>("[data-scroll-flicker]").forEach((target) => {
+					target.removeAttribute("data-scroll-visible");
+					if (observer) {
+						observer.unobserve(target);
+						observer.observe(target);
+					}
+				});
+			}
+			wasAtTop = isAtTop;
+		};
+		const updateObserverBounds = () => createObserver();
+		window.addEventListener("resize", updateObserverBounds);
+		root.addEventListener("scroll", resetRevealsAtTop, { passive: true });
+		return () => {
+			observer?.disconnect();
+			mutations.disconnect();
+			window.removeEventListener("resize", updateObserverBounds);
+			root.removeEventListener("scroll", resetRevealsAtTop);
+		};
+	}, []);
 
 	if (window.location.hash === "#canvas-probe") return <CanvasProbe />;
 	if (canvasProbeV2Mode) return <CanvasProbeV2 mode={canvasProbeV2Mode} />;
@@ -77,46 +204,70 @@ function App() {
 						onScroll={handleScreenScroll}
 					>
 						<div className="terminal-app relative min-h-full">
+							<div className="terminal-dock-slot">
+								<nav
+									aria-label="Primary navigation"
+									className={`terminal-dock ${page === "home" && !pastHero ? "terminal-dock--hidden" : ""}`}
+								>
+									<NavLink
+										aria-label="Home"
+										className="terminal-dock-item"
+										data-vhs-expanded-hitbox=""
+										end
+										to="/"
+										onClick={() => {
+											setPastHero(false);
+											document.getElementById("terminal-scroll")?.scrollTo({
+												top: 0,
+												behavior: "smooth",
+											});
+										}}
+									>
+										<span className="terminal-dock-content">
+											<AnimatedDockIcon animation={homeAnimation} />
+											<span>HOME</span>
+										</span>
+									</NavLink>
+									<NavLink
+										aria-label="Personnel"
+										className="terminal-dock-item"
+										data-vhs-expanded-hitbox=""
+										to="/personnel"
+									>
+										<span className="terminal-dock-content">
+											<AnimatedDockIcon animation={userAnimation} />
+											<span>PERSONNEL</span>
+										</span>
+									</NavLink>
+									<NavLink
+										aria-label="Projects"
+										className="terminal-dock-item"
+										data-vhs-expanded-hitbox=""
+										to="/projects"
+									>
+										<span className="terminal-dock-content">
+											<AnimatedDockIcon animation={folderAnimation} />
+											<span>PROJECTS</span>
+										</span>
+									</NavLink>
+									<a
+										aria-label="Contact by email"
+										className="terminal-dock-item"
+										data-vhs-expanded-hitbox=""
+										href="mailto:hello@janscabs.dev"
+									>
+										<span className="terminal-dock-content">
+											<AnimatedDockIcon animation={mailAnimation} />
+											<span>CONTACT</span>
+										</span>
+									</a>
+								</nav>
+							</div>
 							<div className="assistant-stage">
 								<Poco page={page} pastHero={pastHero} />
 							</div>
-							<div className="relative min-h-full">
-								<div className={page === "home" ? "home-nav-slot" : "page-nav-slot"}>
-									<header
-										className={`navbar terminal-panel terminal-nav px-3 sm:px-6 ${page !== "home" || pastHero ? "terminal-nav--visible" : ""}`}
-									>
-										<div className="navbar-start w-auto flex-none gap-2 sm:gap-3">
-											<Terminal aria-hidden="true" className="size-5 text-primary" />
-											<Link
-												className="text-sm font-bold tracking-[0.16em] sm:text-base"
-												to="/"
-												onClick={() => setPastHero(false)}
-											>
-												JANS//DEV
-											</Link>
-										</div>
-										<nav
-											className="navbar-end ml-auto w-auto flex-none gap-2 text-[0.62rem] tracking-[0.08em] sm:gap-6 sm:text-sm sm:tracking-[0.14em]"
-											aria-label="Primary navigation"
-										>
-											<Link className="link link-hover" to="/" onClick={() => setPastHero(false)}>
-												[HOME]
-											</Link>
-											<Link className="link link-hover" to="/personnel">
-												<span className="sm:hidden">[BIO]</span>
-												<span className="hidden sm:inline">[PERSONNEL]</span>
-											</Link>
-											<Link className="link link-hover" to="/projects">
-												<span className="sm:hidden">[WORK]</span>
-												<span className="hidden sm:inline">[PROJECTS]</span>
-											</Link>
-											<a className="link link-hover" href="mailto:hello@janscabs.dev">
-												[CONTACT]
-											</a>
-										</nav>
-									</header>
-								</div>
-								<div className="mx-auto min-h-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
+								<div className="relative min-h-full">
+								<div className="mx-auto min-h-full max-w-7xl px-4 py-4 pb-28 sm:px-8 sm:py-8 sm:pb-28">
 								<Suspense fallback={<TerminalLoader />}>
 									<Routes>
 										<Route path="/" element={<Home onScrollToContent={scrollToContent} />} />
