@@ -4,18 +4,16 @@ import {
 	useEffect,
 	useRef,
 	useState,
-	type MouseEvent as ReactMouseEvent,
-	type PointerEvent as ReactPointerEvent,
+	type ReactNode,
 	type UIEvent,
 } from "react";
-import UseAnimations from "react-useanimations";
-import type { Animation } from "react-useanimations";
-import folderAnimation from "react-useanimations/lib/folder";
-import homeAnimation from "react-useanimations/lib/home";
-import mailAnimation from "react-useanimations/lib/mail";
-import userAnimation from "react-useanimations/lib/user";
+import { AnimateIcon } from "@animate-ui/react/icons";
 import { Github, Mail } from "lucide-react";
 import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Folder } from "./components/animate-ui/icons/folder";
+import { House } from "./components/animate-ui/icons/house";
+import { Mail as MailIcon } from "./components/animate-ui/icons/mail";
+import { UserRound } from "./components/animate-ui/icons/user-round";
 import Poco from "./components/TerminalAssistant";
 import TerminalLoader from "./components/TerminalLoader";
 import VHS from "./components/canvasui/VHS";
@@ -35,40 +33,29 @@ type VHSAnimatedIconElement = HTMLSpanElement & {
 	vhsHoverLeave?: () => void;
 };
 
-function AnimatedDockIcon({ animation }: { animation: Animation }) {
+function AnimatedDockIcon({ children }: { children: ReactNode }) {
+	const [active, setActive] = useState(false);
+	const setHoverRef = (element: HTMLSpanElement | null) => {
+		if (!element) return;
+		const icon = element as VHSAnimatedIconElement;
+		icon.vhsHoverEnter = () => setActive(true);
+		icon.vhsHoverLeave = () => setActive(false);
+	};
+
 	return (
-		<UseAnimations
-			animation={animation}
-			className="terminal-dock-icon"
-			interaction="hover"
-			render={(eventProps, animationProps) => (
-				<span
-					{...animationProps}
-					{...eventProps}
-					data-vhs-animate-hover=""
-					ref={(element) => {
-						animationProps.ref(element);
-						if (!element) return;
-						const icon = element as VHSAnimatedIconElement;
-						icon.vhsHoverEnter = () => {
-							eventProps.onPointerEnter({
-								defaultPrevented: false,
-								pointerType: "mouse",
-							} as ReactPointerEvent<HTMLElement>);
-							eventProps.onMouseEnter({
-								defaultPrevented: false,
-							} as ReactMouseEvent<HTMLElement>);
-						};
-						icon.vhsHoverLeave = () => {
-							eventProps.onMouseLeave({
-								defaultPrevented: false,
-							} as ReactMouseEvent<HTMLElement>);
-						};
-					}}
-				/>
-			)}
-			size={24}
-		/>
+		<AnimateIcon animate={active} asChild>
+			<span
+				className="terminal-dock-icon"
+				data-vhs-animate-hover=""
+				onPointerEnter={(event) => {
+					if (event.pointerType !== "touch") setActive(true);
+				}}
+				onPointerLeave={() => setActive(false)}
+				ref={setHoverRef}
+			>
+				{children}
+			</span>
+		</AnimateIcon>
 	);
 }
 
@@ -224,7 +211,9 @@ function App() {
 										}}
 									>
 										<span className="terminal-dock-content">
-											<AnimatedDockIcon animation={homeAnimation} />
+											<AnimatedDockIcon>
+												<House size={20} />
+											</AnimatedDockIcon>
 											<span>HOME</span>
 										</span>
 									</NavLink>
@@ -235,7 +224,9 @@ function App() {
 										to="/personnel"
 									>
 										<span className="terminal-dock-content">
-											<AnimatedDockIcon animation={userAnimation} />
+											<AnimatedDockIcon>
+												<UserRound size={20} />
+											</AnimatedDockIcon>
 											<span>PERSONNEL</span>
 										</span>
 									</NavLink>
@@ -246,7 +237,9 @@ function App() {
 										to="/projects"
 									>
 										<span className="terminal-dock-content">
-											<AnimatedDockIcon animation={folderAnimation} />
+											<AnimatedDockIcon>
+												<Folder size={20} />
+											</AnimatedDockIcon>
 											<span>PROJECTS</span>
 										</span>
 									</NavLink>
@@ -257,7 +250,9 @@ function App() {
 										href="mailto:hello@janscabs.dev"
 									>
 										<span className="terminal-dock-content">
-											<AnimatedDockIcon animation={mailAnimation} />
+											<AnimatedDockIcon>
+												<MailIcon size={20} />
+											</AnimatedDockIcon>
 											<span>CONTACT</span>
 										</span>
 									</a>
@@ -267,7 +262,9 @@ function App() {
 								<Poco page={page} pastHero={pastHero} />
 							</div>
 								<div className="relative min-h-full">
-								<div className="mx-auto min-h-full max-w-7xl px-4 py-4 pb-28 sm:px-8 sm:py-8 sm:pb-28">
+								<div
+									className="terminal-content-frame mx-auto min-h-full max-w-7xl px-4 py-4 pb-28 sm:px-8 sm:py-8 sm:pb-28"
+								>
 								<Suspense fallback={<TerminalLoader />}>
 									<Routes>
 										<Route path="/" element={<Home onScrollToContent={scrollToContent} />} />

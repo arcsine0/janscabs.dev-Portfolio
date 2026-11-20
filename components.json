@@ -18,6 +18,7 @@
   },
   "iconLibrary": "lucide",
   "registries": {
-    "@canvas-ui": "https://canvasui.dev/r/{name}.json"
+    "@canvas-ui": "https://canvasui.dev/r/{name}.json",
+    "@animate-ui": "https://animate-ui.com/r/{name}.json"
   }
 }

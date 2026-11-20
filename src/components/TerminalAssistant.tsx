@@ -6,6 +6,7 @@ import {
 	type CSSProperties,
 	type MouseEvent,
 } from "react";
+import { RadioTower } from "./animate-ui/icons/radio-tower";
 
 type Page = "home" | "projects" | "about";
 type LineGroup =
@@ -113,19 +114,23 @@ function choose(group: LineGroup) {
 	return choices[Math.floor(Math.random() * choices.length)];
 }
 
+type DialogueMessage = { id: number; text: string };
+
 function Poco({
 	page,
 	pastHero,
 	enableClickInteractions = true,
-	enableDialogueToast = true,
+	enableDialogueChat = true,
 }: {
 	page: Page;
 	pastHero: boolean;
 	enableClickInteractions?: boolean;
-	enableDialogueToast?: boolean;
+	enableDialogueChat?: boolean;
 }) {
 	const [gaze, setGaze] = useState<Gaze>("center");
 	const [activeLine, setActiveLine] = useState("");
+	const [messages, setMessages] = useState<DialogueMessage[]>([]);
+	const [chatOpen, setChatOpen] = useState(false);
 	const [isTalking, setIsTalking] = useState(false);
 	const [mouthIndex, setMouthIndex] = useState(0);
 	const [idleMouthIndex, setIdleMouthIndex] = useState(idleMouths.length - 1);
@@ -137,6 +142,8 @@ function Poco({
 	const [reaction, setReaction] = useState<"eye" | "cheek" | null>(null);
 	const endSpeech = useRef(0);
 	const endReaction = useRef(0);
+	const nextMessageId = useRef(0);
+	const dialogueLog = useRef<HTMLDivElement>(null);
 	const priorityUntil = useRef(0);
 	const context = useRef<LineGroup>("hero");
 	const previous = useRef<{ page: Page; pastHero: boolean } | null>(null);
@@ -147,7 +154,11 @@ function Poco({
 	const speak = useCallback((group: LineGroup, priority = false) => {
 		if (!priority && Date.now() < priorityUntil.current) return;
 		window.clearTimeout(endSpeech.current);
-		setActiveLine(choose(group));
+		const text = choose(group);
+		setActiveLine(text);
+		setMessages((current) =>
+			[...current, { id: nextMessageId.current++, text }].slice(-6),
+		);
 		setIsTalking(true);
 		if (priority) priorityUntil.current = Date.now() + 3600;
 		endSpeech.current = window.setTimeout(() => {
@@ -155,6 +166,24 @@ function Poco({
 			setIsTalking(false);
 		}, 3000);
 	}, []);
+
+	useEffect(() => {
+		if (chatOpen && dialogueLog.current)
+			dialogueLog.current.scrollTop = dialogueLog.current.scrollHeight;
+	}, [chatOpen, messages]);
+
+	useEffect(() => {
+		if (!isBackground) setChatOpen(false);
+	}, [isBackground]);
+
+	useEffect(() => {
+		if (!chatOpen) return;
+		const closeOnEscape = (event: KeyboardEvent) => {
+			if (event.key === "Escape") setChatOpen(false);
+		};
+		window.addEventListener("keydown", closeOnEscape);
+		return () => window.removeEventListener("keydown", closeOnEscape);
+	}, [chatOpen]);
 
 	useEffect(() => {
 		speak("boot", true);
@@ -379,21 +408,49 @@ function Poco({
 					</div>
 				</div>
 			</div>
-			{enableDialogueToast && isBackground && isTalking && activeLine && (
-				<div
-					className="toast toast-end toast-top assistant-toast"
-					aria-live="polite"
-				>
-					<div role="alert" className="alert alert-outline">
-						<div className="avatar avatar-placeholder assistant-toast-avatar">
-							<div className="bg-primary font-mono text-base text-primary-content">
-								<span>
-									{defaultEye}
-									{mouth}
-								</span>
-							</div>
-						</div>
-						<span>{activeLine}</span>
+			{enableDialogueChat && isBackground && (
+				<div className="poco-comms-layer">
+					<div className="poco-comms">
+						{chatOpen && (
+							<section className="poco-chat-panel" aria-label="Poco dialogue log">
+								<header className="poco-chat-header">
+									<div>
+										<p className="terminal-label">POCO // LIVE CHANNEL</p>
+										<span className="poco-chat-status">Dialogue archive</span>
+									</div>
+									<button
+										className="btn btn-ghost btn-xs poco-chat-close"
+										type="button"
+										aria-label="Close Poco dialogue"
+										onClick={() => setChatOpen(false)}
+									>
+										×
+									</button>
+								</header>
+								<div className="poco-chat-messages" ref={dialogueLog} role="log" aria-live="polite">
+									{messages.map((message) => (
+										<div className="chat chat-start" key={message.id}>
+											<div className="chat-image avatar avatar-placeholder poco-chat-avatar">
+												<div className="bg-primary font-mono text-primary-content">
+													<span>{defaultEye}<span className="poco-chat-avatar-mouth">{mouth}</span></span>
+												</div>
+											</div>
+											<div className="chat-bubble">{message.text}</div>
+										</div>
+									))}
+								</div>
+							</section>
+						)}
+						<button
+							className="btn btn-ghost btn-square poco-radio-trigger"
+							type="button"
+							aria-label={chatOpen ? "Close Poco dialogue" : "Open Poco dialogue"}
+							aria-expanded={chatOpen}
+							aria-pressed={chatOpen}
+							onClick={() => setChatOpen((open) => !open)}
+						>
+							<RadioTower animate={isTalking} loop={isTalking} loopDelay={120} size={24} />
+						</button>
 					</div>
 				</div>
 			)}
