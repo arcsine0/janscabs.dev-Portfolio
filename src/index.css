@@ -270,7 +270,7 @@ body {
 	outline-offset: 0.12em;
 }
 .assistant-toast {
-	position: fixed;
+	position: absolute;
 	top: calc(1rem + env(safe-area-inset-top));
 	right: calc(2rem + env(safe-area-inset-right));
 	bottom: auto;
