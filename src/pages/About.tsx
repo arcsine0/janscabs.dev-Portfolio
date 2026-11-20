@@ -1,5 +1,6 @@
 import { ArrowLeft, Github, Linkedin, Mail, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
+import TerminalGlyphText from "../components/TerminalGlyphText";
 
 function About() {
 	return (
@@ -8,10 +9,15 @@ function About() {
 				<p className="terminal-label mb-4">
 					PERSONNEL.ARCHIVE // ACCESS GRANTED
 				</p>
-				<h1 className="max-w-4xl text-4xl font-normal leading-[0.95] tracking-[-0.04em] sm:text-6xl lg:text-7xl">
-					RAPHAEL "JANS"
-					<br />
-					CABALLEGAN
+				<h1
+					aria-label={'Raphael "Jans" Caballegan'}
+					className="max-w-4xl whitespace-pre-line text-4xl font-normal leading-[0.95] tracking-[-0.04em] sm:text-6xl lg:text-7xl"
+					data-scroll-flicker
+				>
+					<TerminalGlyphText
+						seed="personnel-title"
+						text={'RAPHAEL "JANS"\nCABALLEGAN'}
+					/>
 				</h1>
 				<p className="mt-5 text-base text-base-content/75 sm:text-lg">
 					FULL-STACK WEB DEVELOPER // REMOTE OPERATIONS
@@ -93,8 +99,15 @@ function About() {
 						<div className="card-body gap-6 p-6 sm:p-8">
 							<div>
 								<p className="terminal-label">ACTIVE SERVICE RECORD</p>
-								<h2 className="card-title mt-3 text-2xl font-normal sm:text-3xl">
-									SEEK MARKETING PARTNERS
+								<h2
+									aria-label="Seek Marketing Partners"
+									className="card-title mt-3 text-2xl font-normal sm:text-3xl"
+									data-scroll-flicker
+								>
+									<TerminalGlyphText
+										seed="active-service"
+										text="SEEK MARKETING PARTNERS"
+									/>
 								</h2>
 								<p className="mt-1 text-sm text-base-content/70">
 									JUNIOR FULL-STACK WEB DEVELOPER // JUN 2025 -- PRESENT //
@@ -127,8 +140,15 @@ function About() {
 						<div className="card-body gap-6 p-6 sm:p-8">
 							<div>
 								<p className="terminal-label">PRIOR SERVICE RECORD</p>
-								<h2 className="card-title mt-3 text-2xl font-normal sm:text-3xl">
-									SEEK SOCIAL LTD.
+								<h2
+									aria-label="Seek Social Ltd."
+									className="card-title mt-3 text-2xl font-normal sm:text-3xl"
+									data-scroll-flicker
+								>
+									<TerminalGlyphText
+										seed="prior-service"
+										text="SEEK SOCIAL LTD."
+									/>
 								</h2>
 								<p className="mt-1 text-sm text-base-content/70">
 									JUNIOR WEB DEVELOPER INTERN + SEO ASSISTANT // JAN 2025 -- JUN
@@ -157,8 +177,15 @@ function About() {
 						<div className="card-body gap-6 p-6 sm:p-8">
 							<div>
 								<p className="terminal-label">SYSTEM PROFICIENCIES</p>
-								<h2 className="card-title mt-3 text-2xl font-normal sm:text-3xl">
-									FIELD TOOLKIT
+								<h2
+									aria-label="Field Toolkit"
+									className="card-title mt-3 text-2xl font-normal sm:text-3xl"
+									data-scroll-flicker
+								>
+									<TerminalGlyphText
+										seed="field-toolkit"
+										text="FIELD TOOLKIT"
+									/>
 								</h2>
 							</div>
 							<div className="terminal-rule" />

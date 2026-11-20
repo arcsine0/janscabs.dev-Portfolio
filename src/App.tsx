@@ -1,6 +1,19 @@
-import { lazy, Suspense, useEffect, useRef, useState, type UIEvent } from "react";
-import { Github, Mail, Terminal } from "lucide-react";
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import {
+	lazy,
+	Suspense,
+	useEffect,
+	useRef,
+	useState,
+	type ReactNode,
+	type UIEvent,
+} from "react";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { Github, Mail } from "lucide-react";
+import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Folder } from "./components/animate-ui/icons/folder";
+import { House } from "./components/animate-ui/icons/house";
+import { Mail as MailIcon } from "./components/animate-ui/icons/mail";
+import { UserRound } from "./components/animate-ui/icons/user-round";
 import Poco from "./components/TerminalAssistant";
 import TerminalLoader from "./components/TerminalLoader";
 import VHS from "./components/canvasui/VHS";
@@ -14,6 +27,37 @@ type Page = "home" | "projects" | "about";
 
 const About = lazy(() => import("./pages/About"));
 const Projects = lazy(() => import("./pages/Projects"));
+
+type VHSAnimatedIconElement = HTMLSpanElement & {
+	vhsHoverEnter?: () => void;
+	vhsHoverLeave?: () => void;
+};
+
+function AnimatedDockIcon({ children }: { children: ReactNode }) {
+	const [active, setActive] = useState(false);
+	const setHoverRef = (element: HTMLSpanElement | null) => {
+		if (!element) return;
+		const icon = element as VHSAnimatedIconElement;
+		icon.vhsHoverEnter = () => setActive(true);
+		icon.vhsHoverLeave = () => setActive(false);
+	};
+
+	return (
+		<AnimateIcon animate={active} asChild>
+			<span
+				className="terminal-dock-icon"
+				data-vhs-animate-hover=""
+				onPointerEnter={(event) => {
+					if (event.pointerType !== "touch") setActive(true);
+				}}
+				onPointerLeave={() => setActive(false)}
+				ref={setHoverRef}
+			>
+				{children}
+			</span>
+		</AnimateIcon>
+	);
+}
 
 function pageForPath(pathname: string): Page {
 	if (pathname === "/projects") return "projects";
@@ -36,6 +80,76 @@ function App() {
 		document.getElementById("terminal-scroll")?.scrollTo({ top: 0 });
 		if (changedRoute) setFlash((value) => value + 1);
 	}, [location.pathname]);
+	useEffect(() => {
+		const root = document.getElementById("terminal-scroll");
+		if (!root) return;
+		const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		const targets = new Set<HTMLElement>();
+		let wasAtTop = root.scrollTop <= 64;
+
+		let observer: IntersectionObserver | undefined;
+		const createObserver = () => {
+			observer?.disconnect();
+			if (reducedMotion || !("IntersectionObserver" in window)) {
+				targets.forEach((target) => target.setAttribute("data-scroll-visible", "true"));
+				return;
+			}
+			observer = new IntersectionObserver(
+				(entries) => {
+					entries.forEach(({ isIntersecting, target }) => {
+						if (!isIntersecting) return;
+						target.setAttribute("data-scroll-visible", "true");
+					});
+				},
+				{
+					root,
+					rootMargin: `0px 0px -${Math.round(root.clientHeight * 0.35)}px 0px`,
+				},
+			);
+			targets.forEach((target) => {
+				if (!target.hasAttribute("data-scroll-visible")) observer?.observe(target);
+			});
+		};
+		if ("IntersectionObserver" in window) {
+			createObserver();
+		}
+		const observeNewTargets = () => {
+			root.querySelectorAll<HTMLElement>("[data-scroll-flicker]").forEach((target) => {
+				if (targets.has(target)) return;
+				targets.add(target);
+				if (reducedMotion || !observer) {
+					target.setAttribute("data-scroll-visible", "true");
+				} else {
+					observer.observe(target);
+				}
+			});
+		};
+		observeNewTargets();
+		const mutations = new MutationObserver(observeNewTargets);
+		mutations.observe(root, { childList: true, subtree: true });
+		const resetRevealsAtTop = () => {
+			const isAtTop = root.scrollTop <= 64;
+			if (isAtTop && !wasAtTop) {
+				root.querySelectorAll<HTMLElement>("[data-scroll-flicker]").forEach((target) => {
+					target.removeAttribute("data-scroll-visible");
+					if (observer) {
+						observer.unobserve(target);
+						observer.observe(target);
+					}
+				});
+			}
+			wasAtTop = isAtTop;
+		};
+		const updateObserverBounds = () => createObserver();
+		window.addEventListener("resize", updateObserverBounds);
+		root.addEventListener("scroll", resetRevealsAtTop, { passive: true });
+		return () => {
+			observer?.disconnect();
+			mutations.disconnect();
+			window.removeEventListener("resize", updateObserverBounds);
+			root.removeEventListener("scroll", resetRevealsAtTop);
+		};
+	}, []);
 
 	if (window.location.hash === "#canvas-probe") return <CanvasProbe />;
 	if (canvasProbeV2Mode) return <CanvasProbeV2 mode={canvasProbeV2Mode} />;
@@ -57,10 +171,10 @@ function App() {
 	};
 
 	return (
-		<main className="min-h-screen bg-base-100 p-4 text-base-content">
-			<div className="relative h-[calc(100dvh-2rem)] w-full">
+		<main className="h-dvh w-full overflow-hidden bg-base-100 text-base-content">
+			<div className="relative h-full w-full">
 					<VHS
-						className="relative h-full w-full overflow-hidden border border-primary/70 bg-base-100 shadow-[0_0_18px_rgb(71_255_125_/_0.2)]"
+						className="crt-screen relative h-full w-full overflow-hidden border border-primary/70 bg-base-100"
 						barrel={0.5}
 						scanlines={0.18}
 						grain={0.12}
@@ -69,54 +183,88 @@ function App() {
 						contentClassName={page === "home" && !pastHero ? "home-hero-snap" : undefined}
 						contentId="terminal-scroll"
 						contentStyle={{
-							width: "100vw",
-							minWidth: "100vw",
-							height: "100dvh",
-							minHeight: "100dvh",
+							width: "100%",
+							minWidth: "100%",
+							height: "100%",
+							minHeight: "100%",
 						}}
 						onScroll={handleScreenScroll}
 					>
 						<div className="terminal-app relative min-h-full">
+							<div className="terminal-dock-slot">
+								<nav
+									aria-label="Primary navigation"
+									className={`terminal-dock ${page === "home" && !pastHero ? "terminal-dock--hidden" : ""}`}
+								>
+									<NavLink
+										aria-label="Home"
+										className="terminal-dock-item"
+										data-vhs-expanded-hitbox=""
+										end
+										to="/"
+										onClick={() => {
+											setPastHero(false);
+											document.getElementById("terminal-scroll")?.scrollTo({
+												top: 0,
+												behavior: "smooth",
+											});
+										}}
+									>
+										<span className="terminal-dock-content">
+											<AnimatedDockIcon>
+												<House size={20} />
+											</AnimatedDockIcon>
+											<span>HOME</span>
+										</span>
+									</NavLink>
+									<NavLink
+										aria-label="Personnel"
+										className="terminal-dock-item"
+										data-vhs-expanded-hitbox=""
+										to="/personnel"
+									>
+										<span className="terminal-dock-content">
+											<AnimatedDockIcon>
+												<UserRound size={20} />
+											</AnimatedDockIcon>
+											<span>PERSONNEL</span>
+										</span>
+									</NavLink>
+									<NavLink
+										aria-label="Projects"
+										className="terminal-dock-item"
+										data-vhs-expanded-hitbox=""
+										to="/projects"
+									>
+										<span className="terminal-dock-content">
+											<AnimatedDockIcon>
+												<Folder size={20} />
+											</AnimatedDockIcon>
+											<span>PROJECTS</span>
+										</span>
+									</NavLink>
+									<a
+										aria-label="Contact by email"
+										className="terminal-dock-item"
+										data-vhs-expanded-hitbox=""
+										href="mailto:hello@janscabs.dev"
+									>
+										<span className="terminal-dock-content">
+											<AnimatedDockIcon>
+												<MailIcon size={20} />
+											</AnimatedDockIcon>
+											<span>CONTACT</span>
+										</span>
+									</a>
+								</nav>
+							</div>
 							<div className="assistant-stage">
 								<Poco page={page} pastHero={pastHero} />
 							</div>
-							<div className="relative min-h-full">
-								<div className={page === "home" ? "home-nav-slot" : "page-nav-slot"}>
-									<header
-										className={`navbar terminal-panel terminal-nav px-3 sm:px-6 ${page !== "home" || pastHero ? "terminal-nav--visible" : ""}`}
-									>
-										<div className="navbar-start w-auto flex-none gap-2 sm:gap-3">
-											<Terminal aria-hidden="true" className="size-5 text-primary" />
-											<Link
-												className="text-sm font-bold tracking-[0.16em] sm:text-base"
-												to="/"
-												onClick={() => setPastHero(false)}
-											>
-												JANS//DEV
-											</Link>
-										</div>
-										<nav
-											className="navbar-end ml-auto w-auto flex-none gap-2 text-[0.62rem] tracking-[0.08em] sm:gap-6 sm:text-sm sm:tracking-[0.14em]"
-											aria-label="Primary navigation"
-										>
-											<Link className="link link-hover" to="/" onClick={() => setPastHero(false)}>
-												[HOME]
-											</Link>
-											<Link className="link link-hover" to="/personnel">
-												<span className="sm:hidden">[BIO]</span>
-												<span className="hidden sm:inline">[PERSONNEL]</span>
-											</Link>
-											<Link className="link link-hover" to="/projects">
-												<span className="sm:hidden">[WORK]</span>
-												<span className="hidden sm:inline">[PROJECTS]</span>
-											</Link>
-											<a className="link link-hover" href="mailto:hello@janscabs.dev">
-												[CONTACT]
-											</a>
-										</nav>
-									</header>
-								</div>
-								<div className="mx-auto min-h-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
+								<div className="relative min-h-full">
+								<div
+									className="terminal-content-frame mx-auto min-h-full max-w-7xl px-4 py-4 pb-28 sm:px-8 sm:py-8 sm:pb-28"
+								>
 								<Suspense fallback={<TerminalLoader />}>
 									<Routes>
 										<Route path="/" element={<Home onScrollToContent={scrollToContent} />} />

@@ -10,8 +10,10 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@animate-ui/react": "^2.4.6",
 		"@netlify/vite-plugin": "^3.0.1",
 		"lucide-react": "^0.469.0",
+		"motion": "^14.14.0",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
 		"react-router-dom": "^7.18.4"

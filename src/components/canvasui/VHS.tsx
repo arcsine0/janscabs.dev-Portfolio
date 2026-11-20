@@ -9,6 +9,11 @@ import {
 	type UIEventHandler,
 } from "react";
 
+type VHSAnimatedHoverElement = HTMLElement & {
+	vhsHoverEnter?: () => void;
+	vhsHoverLeave?: () => void;
+};
+
 const canvasDimensionLimits = new WeakMap<
 	WebGLRenderingContext | WebGL2RenderingContext,
 	number
@@ -766,6 +771,11 @@ function getBarrelTarget(
 	const bounds = source.getBoundingClientRect();
 	const contentBounds = content.getBoundingClientRect();
 	if (!bounds.width || !bounds.height) return null;
+	const directTarget = findInteractiveTarget(
+		document.elementFromPoint(clientX, clientY),
+		content,
+	);
+	if (directTarget?.hasAttribute("data-vhs-expanded-hitbox")) return directTarget;
 
 	const maxX = Math.min(1, Math.max(0.05, content.clientWidth / bounds.width));
 	const x = (clientX - bounds.left) / bounds.width;
@@ -801,6 +811,7 @@ export function VHS({
 	const instanceRef = useRef<VHSInstance | null>(null);
 	const hoveredTargetRef = useRef<HTMLElement | null>(null);
 	const nativeHoverTargetRef = useRef<HTMLElement | null>(null);
+	const animatedHoverTargetRef = useRef<HTMLElement | null>(null);
 	const [initialOptions] = useState(options);
 	const [failed, setFailed] = useState(false);
 
@@ -811,9 +822,25 @@ export function VHS({
 	);
 	const native = enableHtmlInCanvas && supported && !failed;
 	const barrelActive = native && (options.barrel ?? DEFAULTS.barrel) > 0;
+	const setAnimatedHoverTarget = (target: HTMLElement | null, pointerType: string) => {
+		const nextTarget =
+			pointerType !== "touch"
+				? (target?.querySelector<HTMLElement>(
+						"[data-vhs-animate-hover]",
+					) as VHSAnimatedHoverElement | null)
+				: null;
+		const currentTarget = animatedHoverTargetRef.current as
+			| VHSAnimatedHoverElement
+			| null;
+		if (currentTarget === nextTarget) return;
+		currentTarget?.vhsHoverLeave?.();
+		nextTarget?.vhsHoverEnter?.();
+		animatedHoverTargetRef.current = nextTarget;
+	};
 	const clearBarrelHover = () => {
 		hoveredTargetRef.current?.removeAttribute("data-vhs-warp-hover");
 		nativeHoverTargetRef.current?.removeAttribute("data-vhs-native-hover");
+		setAnimatedHoverTarget(null, "");
 		hoveredTargetRef.current = null;
 		nativeHoverTargetRef.current = null;
 		if (wrapperRef.current)
@@ -849,6 +876,7 @@ export function VHS({
 		}
 		const mismatchedNativeTarget =
 			nativeTarget === target ? null : nativeTarget;
+		setAnimatedHoverTarget(target !== nativeTarget ? target : null, event.pointerType);
 		if (nativeHoverTargetRef.current !== mismatchedNativeTarget) {
 			nativeHoverTargetRef.current?.removeAttribute("data-vhs-native-hover");
 			mismatchedNativeTarget?.setAttribute("data-vhs-native-hover", "");
@@ -896,6 +924,7 @@ export function VHS({
 		() => () => {
 			hoveredTargetRef.current?.removeAttribute("data-vhs-warp-hover");
 			nativeHoverTargetRef.current?.removeAttribute("data-vhs-native-hover");
+			setAnimatedHoverTarget(null, "");
 		},
 		[],
 	);

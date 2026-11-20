@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import TerminalGlyphText from "../components/TerminalGlyphText";
 
 const records = ["01", "02", "03", "04"];
 
@@ -9,10 +10,15 @@ function Projects() {
 			<header className="mb-8 flex flex-col gap-5 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
 				<div>
 					<p className="terminal-label mb-4">PROJECT.ARCHIVE // PUBLIC INDEX</p>
-					<h1 className="text-4xl font-normal leading-[0.95] tracking-[-0.04em] sm:text-6xl lg:text-7xl">
-						SELECTED
-						<br />
-						TRANSMISSIONS
+					<h1
+						aria-label="Selected Transmissions"
+						className="whitespace-pre-line text-4xl font-normal leading-[0.95] tracking-[-0.04em] sm:text-6xl lg:text-7xl"
+						data-scroll-flicker
+					>
+						<TerminalGlyphText
+							seed="projects-title"
+							text={"SELECTED\nTRANSMISSIONS"}
+						/>
 					</h1>
 				</div>
 				<p className="max-w-sm text-sm leading-6 text-base-content/75 sm:text-right">
@@ -23,7 +29,13 @@ function Projects() {
 
 			<section className="terminal-section py-10 sm:py-14">
 				<div className="mb-8 flex items-baseline justify-between">
-					<h2 className="text-2xl font-normal sm:text-3xl">CASE FILE INDEX</h2>
+					<h2
+						aria-label="Case File Index"
+						className="text-2xl font-normal sm:text-3xl"
+						data-scroll-flicker
+					>
+						<TerminalGlyphText seed="case-file-index" text="CASE FILE INDEX" />
+					</h2>
 					<span className="terminal-label">{records.length} RECORDS</span>
 				</div>
 				<div className="grid gap-4 md:grid-cols-2">
