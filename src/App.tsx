@@ -171,10 +171,10 @@ function App() {
 	};
 
 	return (
-		<main className="min-h-screen bg-base-100 p-4 text-base-content">
-			<div className="relative h-[calc(100dvh-2rem)] w-full">
+		<main className="h-dvh w-full overflow-hidden bg-base-100 text-base-content">
+			<div className="relative h-full w-full">
 					<VHS
-						className="relative h-full w-full overflow-hidden border border-primary/70 bg-base-100 shadow-[0_0_18px_rgb(71_255_125_/_0.2)]"
+						className="crt-screen relative h-full w-full overflow-hidden border border-primary/70 bg-base-100"
 						barrel={0.5}
 						scanlines={0.18}
 						grain={0.12}
@@ -183,10 +183,10 @@ function App() {
 						contentClassName={page === "home" && !pastHero ? "home-hero-snap" : undefined}
 						contentId="terminal-scroll"
 						contentStyle={{
-							width: "100vw",
-							minWidth: "100vw",
-							height: "100dvh",
-							minHeight: "100dvh",
+							width: "100%",
+							minWidth: "100%",
+							height: "100%",
+							minHeight: "100%",
 						}}
 						onScroll={handleScreenScroll}
 					>

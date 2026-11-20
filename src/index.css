@@ -173,6 +173,26 @@ body {
 	);
 	mix-blend-mode: screen;
 }
+.crt-screen {
+	box-shadow: 0 0 10px rgb(71 255 125 / 0.28);
+}
+.crt-screen::before {
+	position: absolute;
+	inset: 1px;
+	z-index: 10;
+	content: "";
+	background: linear-gradient(
+		90deg,
+		rgb(77 255 126 / 0.13),
+		transparent 8%,
+		transparent 92%,
+		rgb(77 255 126 / 0.13)
+	);
+	box-shadow:
+		inset 22px 0 28px rgb(50 255 108 / 0.12),
+		inset -22px 0 28px rgb(50 255 108 / 0.12);
+	pointer-events: none;
+}
 .terminal-app {
 	min-height: 100%;
 	position: relative;
