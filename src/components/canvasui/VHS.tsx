@@ -23,9 +23,10 @@ const canvasDimensionLimits = new WeakMap<
 function getCanvasPixelRatio(
 	element: HTMLElement,
 	context?: WebGLRenderingContext | WebGL2RenderingContext,
+	maxDpr = 2,
 ): number {
 	const scale = window.visualViewport?.scale || 1;
-	const requested = Math.min(window.devicePixelRatio || 1, 2) * scale;
+	const requested = Math.min(window.devicePixelRatio || 1, maxDpr) * scale;
 	const width = Math.max(element.clientWidth, 1);
 	const height = Math.max(element.clientHeight, 1);
 	let maxDimension = 8192;
@@ -504,7 +505,11 @@ export function createVHS(
 	}
 
 	function syncCanvasSize() {
-		const dpr = getCanvasPixelRatio(output, gl!);
+		const dpr = getCanvasPixelRatio(
+			output,
+			gl!,
+			output.clientWidth < 768 ? 1.5 : 2,
+		);
 		const width = Math.max(1, Math.round(output.clientWidth * dpr));
 		const height = Math.max(1, Math.round(output.clientHeight * dpr));
 		if (output.width !== width || output.height !== height) {
@@ -516,8 +521,9 @@ export function createVHS(
 			Math.max(0.05, content.clientWidth / Math.max(output.clientWidth, 1)),
 		);
 		if (htmlInCanvas) {
-			const sourceWidth = Math.max(1, Math.round(source.clientWidth * dpr));
-			const sourceHeight = Math.max(1, Math.round(source.clientHeight * dpr));
+			const sourceDpr = getCanvasPixelRatio(source, gl!);
+			const sourceWidth = Math.max(1, Math.round(source.clientWidth * sourceDpr));
+			const sourceHeight = Math.max(1, Math.round(source.clientHeight * sourceDpr));
 			if (source.width !== sourceWidth || source.height !== sourceHeight) {
 				source.width = sourceWidth;
 				source.height = sourceHeight;
@@ -622,10 +628,18 @@ export function createVHS(
 			running = false;
 			return;
 		}
-		const delta = Math.min((now - lastTime) / 1000, 1 / 30);
-		lastTime = now;
+		const delta = Math.min((now - lastTime) / 1000, 1 / 15);
+		if (
+			!reducedMotion &&
+			output.clientWidth < 768 &&
+			delta * 1000 < 1000 / 30
+		) {
+			raf = requestAnimationFrame(frame);
+			return;
+		}
 		if (!reducedMotion) time += delta * config.speed;
 		render();
+		lastTime = now;
 		if (reducedMotion && !contentDirty) {
 			running = false;
 			return;
