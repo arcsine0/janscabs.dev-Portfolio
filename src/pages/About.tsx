@@ -1,6 +1,8 @@
 import { ArrowLeft, Github, Linkedin, Mail, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import TerminalGlyphText from "../components/TerminalGlyphText";
+import { contactChannels } from "../data/contactChannels";
+
 
 function About() {
 	return (
@@ -63,19 +65,19 @@ function About() {
 							<div className="mt-3 grid gap-3 text-sm">
 								<a
 									className="link link-hover flex items-center gap-2"
-									href="mailto:raphael.caballegan@gmail.com"
+									href={contactChannels.email.href}
 								>
 									<Mail className="size-4 text-primary" /> Email
 								</a>
 								<a
 									className="link link-hover flex items-center gap-2"
-									href="tel:+639673127888"
+									href={contactChannels.phone.href}
 								>
-									<Phone className="size-4 text-primary" /> +63 967 312 7888
+									<Phone className="size-4 text-primary" /> {contactChannels.phone.display}
 								</a>
 								<a
 									className="link link-hover flex items-center gap-2"
-									href="https://www.linkedin.com/in/jans-caballegan"
+									href={contactChannels.linkedin.href}
 									target="_blank"
 									rel="noreferrer"
 								>
@@ -83,13 +85,20 @@ function About() {
 								</a>
 								<a
 									className="link link-hover flex items-center gap-2"
-									href="https://github.com/arcsine0"
+									href={contactChannels.github.href}
 									target="_blank"
 									rel="noreferrer"
 								>
 									<Github className="size-4 text-primary" /> GitHub
 								</a>
 							</div>
+							<a
+								className="btn btn-ghost btn-sm mt-5 justify-start"
+								download="Raphael-Caballegan-Resume.pdf"
+								href="/raphael-caballegan-resume.pdf"
+							>
+								Download resume PDF
+							</a>
 						</div>
 					</div>
 				</aside>

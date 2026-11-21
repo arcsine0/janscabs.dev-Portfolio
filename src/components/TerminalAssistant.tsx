@@ -6,9 +6,10 @@ import {
 	type CSSProperties,
 	type MouseEvent,
 } from "react";
+import { Settings2 } from "lucide-react";
 import { RadioTower } from "./animate-ui/icons/radio-tower";
 
-type Page = "home" | "projects" | "about";
+type Page = "home" | "projects" | "about" | "contact";
 type LineGroup =
 	| "boot"
 	| "hero"
@@ -106,6 +107,7 @@ type Gaze = keyof typeof eyes;
 function groupFor(page: Page, pastHero: boolean): LineGroup {
 	if (page === "about") return "personnel";
 	if (page === "projects") return "projects";
+	if (page === "contact") return "contact";
 	return pastHero ? "homeContent" : "hero";
 }
 
@@ -119,11 +121,13 @@ type DialogueMessage = { id: number; text: string };
 function Poco({
 	page,
 	pastHero,
+	onOpenSettings,
 	enableClickInteractions = true,
 	enableDialogueChat = true,
 }: {
 	page: Page;
 	pastHero: boolean;
+	onOpenSettings?: () => void;
 	enableClickInteractions?: boolean;
 	enableDialogueChat?: boolean;
 }) {
@@ -441,16 +445,28 @@ function Poco({
 								</div>
 							</section>
 						)}
-						<button
-							className="btn btn-ghost btn-square poco-radio-trigger"
-							type="button"
-							aria-label={chatOpen ? "Close Poco dialogue" : "Open Poco dialogue"}
-							aria-expanded={chatOpen}
-							aria-pressed={chatOpen}
-							onClick={() => setChatOpen((open) => !open)}
-						>
-							<RadioTower animate={isTalking} loop={isTalking} loopDelay={120} size={24} />
-						</button>
+		<div className="poco-comms-actions">
+			{onOpenSettings && (
+				<button
+					aria-label="Open display settings"
+					className="btn btn-ghost btn-square poco-settings-trigger"
+					onClick={onOpenSettings}
+					type="button"
+				>
+					<Settings2 aria-hidden="true" size={22} />
+				</button>
+			)}
+			<button
+				className="btn btn-ghost btn-square poco-radio-trigger"
+				type="button"
+				aria-label={chatOpen ? "Close Poco dialogue" : "Open Poco dialogue"}
+				aria-expanded={chatOpen}
+				aria-pressed={chatOpen}
+				onClick={() => setChatOpen((open) => !open)}
+			>
+				<RadioTower animate={isTalking} loop={isTalking} loopDelay={120} size={24} />
+			</button>
+		</div>
 					</div>
 				</div>
 			)}
