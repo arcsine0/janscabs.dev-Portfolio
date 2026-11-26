@@ -629,14 +629,6 @@ export function createVHS(
 			return;
 		}
 		const delta = Math.min((now - lastTime) / 1000, 1 / 15);
-		if (
-			!reducedMotion &&
-			output.clientWidth < 768 &&
-			delta * 1000 < 1000 / 30
-		) {
-			raf = requestAnimationFrame(frame);
-			return;
-		}
 		if (!reducedMotion) time += delta * config.speed;
 		render();
 		lastTime = now;
