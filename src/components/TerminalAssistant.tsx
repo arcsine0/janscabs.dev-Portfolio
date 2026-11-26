@@ -239,9 +239,9 @@ function Poco({
 
 	useEffect(() => {
 		let movement = { x: 0, delta: 0, time: 0, turns: 0 };
-		const onPointerMove = (event: PointerEvent) => {
-			const x = event.clientX / window.innerWidth - 0.5;
-			const y = event.clientY / window.innerHeight - 0.5;
+		const movePoco = (clientX: number, clientY: number) => {
+			const x = clientX / window.innerWidth - 0.5;
+			const y = clientY / window.innerHeight - 0.5;
 			const next: Gaze =
 				Math.abs(x) > Math.abs(y)
 					? x < -0.16
@@ -261,7 +261,7 @@ function Poco({
 				y: Math.max(-16, Math.min(16, y * 32)),
 			});
 
-			const delta = event.clientX - movement.x;
+			const delta = clientX - movement.x;
 			const now = performance.now();
 			if (
 				Math.abs(delta) > 90 &&
@@ -278,11 +278,23 @@ function Poco({
 			} else if (now - movement.time > 300) {
 				movement.turns = 0;
 			}
-			movement = { x: event.clientX, delta, time: now, turns: movement.turns };
+			movement = { x: clientX, delta, time: now, turns: movement.turns };
+		};
+		const onPointerMove = (event: PointerEvent) => {
+			if (event.pointerType === "touch") return;
+			movePoco(event.clientX, event.clientY);
+		};
+		const onTouchMove = (event: TouchEvent) => {
+			const touch = event.touches[0];
+			if (touch) movePoco(touch.clientX, touch.clientY);
 		};
 
 		window.addEventListener("pointermove", onPointerMove, { passive: true });
-		return () => window.removeEventListener("pointermove", onPointerMove);
+		window.addEventListener("touchmove", onTouchMove, { passive: true });
+		return () => {
+			window.removeEventListener("pointermove", onPointerMove);
+			window.removeEventListener("touchmove", onTouchMove);
+		};
 	}, [canInteract, speak]);
 
 	useEffect(() => () => window.clearTimeout(endReaction.current), []);
