@@ -1259,9 +1259,21 @@ body {
 .home-record:nth-child(3) {
 	--scroll-flicker-delay: 160ms;
 }
+[data-scroll-flicker] {
+	--scroll-flicker-distance: clamp(0.75rem, 2.5vw, 1.75rem);
+	opacity: 0;
+	transform: translateY(var(--scroll-flicker-distance));
+}
+[data-scroll-flicker]:not([data-scroll-visible="true"]):focus-within {
+	opacity: 1;
+	transform: none;
+}
 [data-scroll-flicker][data-scroll-visible="true"] {
-	animation: terminal-scroll-flicker 660ms steps(1, end)
-		var(--scroll-flicker-delay, 0ms) both;
+	animation:
+		terminal-scroll-flicker 660ms steps(1, end) var(--scroll-flicker-delay, 0ms)
+			both,
+		terminal-scroll-rise 660ms cubic-bezier(0.23, 1, 0.32, 1)
+			var(--scroll-flicker-delay, 0ms) both;
 }
 [data-scroll-flicker][data-scroll-visible="true"] .terminal-glyph {
 	animation-name: terminal-character-flicker;
@@ -1299,7 +1311,6 @@ body {
 @keyframes terminal-scroll-flicker {
 	0% {
 		opacity: 0;
-		transform: translateY(0.5rem);
 	}
 	3% {
 		opacity: 1;
@@ -1327,10 +1338,21 @@ body {
 	}
 	100% {
 		opacity: 1;
+	}
+}
+@keyframes terminal-scroll-rise {
+	from {
+		transform: translateY(var(--scroll-flicker-distance));
+	}
+	to {
 		transform: translateY(0);
 	}
 }
 @media (prefers-reduced-motion: reduce) {
+	[data-scroll-flicker] {
+		opacity: 1;
+		transform: none;
+	}
 	[data-scroll-flicker][data-scroll-visible="true"] {
 		animation: none;
 	}
