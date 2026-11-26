@@ -356,7 +356,9 @@ function Poco({
 	return (
 		<>
 			<div
-				className={`assistant-engine ${isBackground ? "assistant-engine--background" : ""} ${
+				className={`assistant-engine ${
+					page === "home" ? "assistant-engine--home" : ""
+				} ${isBackground ? "assistant-engine--background" : ""} ${
 					canClick ? "assistant-engine--interactive" : ""
 				}`}
 			>

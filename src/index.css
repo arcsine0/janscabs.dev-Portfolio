@@ -517,6 +517,38 @@ body {
 	scroll-snap-align: start;
 	scroll-snap-stop: always;
 }
+@keyframes assistant-scroll-depth {
+	from {
+		transform: scale(1);
+		opacity: 1;
+	}
+	to {
+		transform: scale(0.75);
+		opacity: 0.2;
+	}
+}
+@media (prefers-reduced-motion: no-preference) {
+	@supports (
+		(animation-timeline: scroll()) and
+			(animation-range: exit 0% exit 100%) and
+			(timeline-scope: --poco-home-hero) and
+			(view-timeline-name: --poco-home-hero)
+	) {
+		#terminal-scroll {
+			timeline-scope: --poco-home-hero;
+		}
+		.home-hero {
+			view-timeline-name: --poco-home-hero;
+			view-timeline-axis: block;
+		}
+		.assistant-engine--home {
+			animation: assistant-scroll-depth auto linear both;
+			animation-timeline: --poco-home-hero;
+			animation-range: exit 0% exit 100%;
+			transition: none;
+		}
+	}
+}
 .home-hero-scroll {
 	display: grid;
 	place-items: center;
