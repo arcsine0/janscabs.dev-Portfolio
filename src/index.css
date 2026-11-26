@@ -226,7 +226,7 @@ body {
 	height: 0;
 	pointer-events: none;
 }
-.assistant-stage:has(.poco-comms-layer) {
+.assistant-stage:has(.poco-comms-layer--visible) {
 	z-index: 30;
 }
 .assistant-engine {
@@ -316,7 +316,13 @@ body {
 	width: 100%;
 	height: 100dvh;
 	z-index: 35;
+	visibility: hidden;
 	pointer-events: none;
+	transition: visibility 360ms linear;
+	transition-behavior: allow-discrete;
+}
+.poco-comms-layer--visible {
+	visibility: visible;
 }
 .poco-comms {
 	position: absolute;
@@ -341,6 +347,33 @@ body {
 	align-items: center;
 	justify-content: space-between;
 	gap: 0.55rem;
+}
+.poco-comms-actions > button {
+	opacity: 0;
+	transition:
+		opacity 360ms ease-in-out,
+		translate 360ms ease-in-out;
+}
+.poco-settings-trigger.btn {
+	translate: -3rem 0;
+}
+.poco-radio-trigger.btn {
+	translate: 3rem 0;
+}
+.poco-comms-layer--visible .poco-comms-actions > button {
+	opacity: 1;
+	translate: 0 0;
+}
+@starting-style {
+	.poco-comms-layer--visible .poco-comms-actions > button {
+		opacity: 0;
+	}
+	.poco-comms-layer--visible .poco-settings-trigger.btn {
+		translate: -3rem 0;
+	}
+	.poco-comms-layer--visible .poco-radio-trigger.btn {
+		translate: 3rem 0;
+	}
 }
 .poco-radio-trigger.btn {
 	width: 3rem;
@@ -507,10 +540,28 @@ body {
 	.assistant-float {
 		animation: none;
 	}
+	.poco-comms-actions > button {
+		transition-duration: 120ms;
+		translate: none;
+	}
+	.terminal-dock {
+		transition-duration: 120ms;
+		transform: none;
+	}
+	.terminal-dock--hidden {
+		transform: none;
+	}
 }
 .home-hero-snap {
-	scroll-behavior: smooth;
 	scroll-snap-type: y mandatory;
+}
+#terminal-scroll {
+	scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+	#terminal-scroll {
+		scroll-behavior: auto;
+	}
 }
 .home-hero,
 #home-content {
@@ -839,12 +890,21 @@ body {
 		inset 0 0 16px rgb(23 255 103 / 0.07);
 	transition:
 		transform 180ms ease,
-		opacity 180ms ease;
+		opacity 180ms ease,
+		visibility 180ms linear;
+	transition-behavior: allow-discrete;
 }
 .terminal-dock--hidden {
 	transform: translateY(calc(100% + 2rem));
 	opacity: 0;
+	visibility: hidden;
 	pointer-events: none;
+}
+@starting-style {
+	.terminal-dock:not(.terminal-dock--hidden) {
+		transform: translateY(calc(100% + 2rem));
+		opacity: 0;
+	}
 }
 .terminal-dock-item {
 	position: relative;

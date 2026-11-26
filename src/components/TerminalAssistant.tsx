@@ -414,8 +414,11 @@ function Poco({
 					</div>
 				</div>
 			</div>
-			{enableDialogueChat && isBackground && (
-				<div className="poco-comms-layer">
+			{enableDialogueChat && (
+				<div
+					aria-hidden={!isBackground}
+					className={`poco-comms-layer ${isBackground ? "poco-comms-layer--visible" : ""}`}
+				>
 					<div className="poco-comms">
 						{chatOpen && (
 							<section className="poco-chat-panel" aria-label="Poco dialogue log">
